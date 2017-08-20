@@ -4,8 +4,8 @@
 #
 #  make  -> make both the presentation and the handout
 #
-#  make final -> make both the presentation and the handout then, 
-#  		 compress them (lower their quality and using 7z)
+#  make final -> make the handout only and compress it
+#  		 (lower their quality and using 7z)
 #
 MAIN=memoria
 
@@ -13,7 +13,9 @@ TMP=tmp
 COMPRESS_LEVEL=screen
 
 COMPILE_FLAGS=-output-directory=${TMP} -output-format=pdf
-COMPRESS_FLAGS=-sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/${COMPRESS_LEVEL} -dNOPAUSE -dQUIET -dBATCH 
+GS_FLAGS=-sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -r150 -dPDFSETTINGS=/${COMPRESS_LEVEL} -dNOPAUSE -dQUIET -dBATCH
+COMPRESS_FLAGS=-t7z -m0=lzma -mx=9 -mfb=64 -md=128m -ms=on
+
 
 all: pdf handout
 
@@ -30,14 +32,11 @@ handout:
 	pdfnup ${TMP}/${MAIN}.pdf --nup 2x3 --no-landscape --paper letterpaper --frame True --suffix "handout"
 
 
-final: all
-	gs ${COMPRESS_FLAGS} -sOutputFile=${TMP}/${MAIN}.${COMPRESS_LEVEL}.pdf ${MAIN}.pdf
-	gs ${COMPRESS_FLAGS} -sOutputFile=${TMP}/${MAIN}-handout.${COMPRESS_LEVEL}.pdf ${MAIN}-handout.pdf
-	mv ${TMP}/${MAIN}.${COMPRESS_LEVEL}.pdf ${MAIN}.pdf
+final: handout
+	gs ${GS_FLAGS} -sOutputFile=${TMP}/${MAIN}-handout.${COMPRESS_LEVEL}.pdf ${MAIN}-handout.pdf
 	mv ${TMP}/${MAIN}-handout.${COMPRESS_LEVEL}.pdf ${MAIN}-handout.pdf
-	mat ${MAIN}.pdf
 	mat ${MAIN}-handout.pdf
-	7z a -mx=9 ${MAIN}.7z ${MAIN}.pdf ${MAIN}-handout.pdf
+	7z a ${COMPRESS_FLAGS} ${MAIN}.7z ${MAIN}-handout.pdf
 
 clean:
 	rm -f ${MAIN}.7z ${MAIN}.pdf ${MAIN}-handout.pdf
