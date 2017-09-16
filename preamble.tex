@@ -122,6 +122,52 @@
    basewidth={0.55em,0.55em}
 }
 
+\lstdefinelanguage{json}{
+    literate=
+     *{:}{{{\color{violet}{:}}}}{1}
+      {,}{{{\color{violet}{,}}}}{1}
+      {\{}{{{\color{darkgreen}{\{}}}}{1}
+      {\}}{{{\color{darkgreen}{\}}}}}{1}
+      {[}{{{\color{darkgreen}{[}}}}{1}
+      {]}{{{\color{darkgreen}{]}}}}{1},
+}
+
+
+\lstdefinestyle{normaljson}{language=json,  % lenguaje json
+   numbers=left,                            % enumerar las lineas
+   keywordstyle=\color{darkblue}\textbf,    % color de las keywords
+   stringstyle=\color{red},                 % color de los strings
+   commentstyle=\color{red},                % color de los comentarios
+   basicstyle=\color{black}\ttfamily\footnotesize\bfseries,     % color del texto en general
+   morecomment=[l][\color{magenta}]{\#},    % coloreamos las intrucciones del precompilador (todo lo que empieza con #)
+   ndkeywords={NULL,nullptr},               % definimos una nuevas keywords como NULL y nullptr
+   ndkeywordstyle=\color{violet},           % y las nuevas keywords tendran este color
+   frame=simple,                            % simple, sin ningun marco o frame alrededor del codigo
+   basewidth={0.55em,0.55em}                % tamano de las letras/lineas. usado para reducir el whitespace entre estas
+}
+
+\lstdefinelanguage{http}{
+    morekeywords={
+        GET,
+        PUT,
+        POST,
+        DELETE
+    }
+}
+
+\lstdefinestyle{normalhttp}{language=http,  % lenguaje HTTP
+   numbers=left,                            % enumerar las lineas
+   keywordstyle=\color{darkblue}\textbf,    % color de las keywords
+   stringstyle=\color{red},                 % color de los strings
+   commentstyle=\color{red},                % color de los comentarios
+   basicstyle=\color{black}\ttfamily\footnotesize\bfseries,     % color del texto en general
+   morecomment=[l][\color{magenta}]{\#},    % coloreamos las intrucciones del precompilador (todo lo que empieza con #)
+   ndkeywords={NULL,nullptr},               % definimos una nuevas keywords como NULL y nullptr
+   ndkeywordstyle=\color{violet},           % y las nuevas keywords tendran este color
+   frame=simple,                            % simple, sin ningun marco o frame alrededor del codigo
+   basewidth={0.55em,0.55em}                % tamano de las letras/lineas. usado para reducir el whitespace entre estas
+}
+
 % Pone las constantes numericas con color (violeta en este caso):
 % - los numeros que estan dentro de un string/comentarios NO son coloreados
 % - los numeros por fuera que pertenecen a una palabra SON coloreados 
