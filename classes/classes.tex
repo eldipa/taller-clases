@@ -579,7 +579,7 @@ struct Vector {
   int *data;
   int size;
 
-  void set(int pos, val) {
+  void set(int pos, int val) {
       this->data[pos] = val;
   }
 
@@ -650,7 +650,7 @@ struct Vector {
   int * const data; // no confundir con int const * data;
   const int size; // equivalente a int const size;
 
-  void set(int pos, val) {
+  void set(int pos, int val) {
       this->data[pos] = val;
   }
 
