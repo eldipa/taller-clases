@@ -2,3 +2,5 @@
 *.ppt
 *.pptx
 */tmp/
+
+!*/bin/*

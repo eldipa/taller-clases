@@ -37,6 +37,7 @@ ppt: _prepare
 	mv ${TMP}/${MAIN}.pdf ../pdf2pptx/${MAIN}-for-ppt.pdf
 	cd ../pdf2pptx/ && ./pdf2pptx.sh ${MAIN}-for-ppt.pdf
 	mv ../pdf2pptx/${MAIN}-for-ppt.pdf.pptx .
+	rm ../pdf2pptx/${MAIN}-for-ppt.pdf
 
 handout:  _prepare
 	latex -output-directory=tmp -output-format=pdf '\def\handoutmode{1}\def\pptsupportmode{0}\input{${MAIN}}'
