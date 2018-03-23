@@ -9,10 +9,13 @@
 % Definir \handoutmode como algo distinto de "1" para compilar las diapositivas
 % normalmente.
 %
+% Definir \pptsupportmode como "1" para activar el soporte de PPTs, algo
+% distinto para compilar las diapositivas normalmente
+%
 % Para configurar el modo desde afuera (la linea de comandos de latex) correr
 % la compilacion como:
 %
-%   latex -output-directory=tmp -output-format=pdf '\def\handoutmode{1}\include{FILE.tex}'
+%   latex -output-directory=tmp -output-format=pdf '\def\handoutmode{1}\def\pptsupportmode{1}\include{FILE.tex}'
 %
 \if\handoutmode1
     \documentclass[professionalfonts,handout]{beamer}
@@ -21,6 +24,10 @@
     \setbeamercolor{background canvas}{bg=white}
 \else
     \documentclass[professionalfonts]{beamer}
+\fi
+
+\if\pptsupportmode1
+    \setbeamercolor{background canvas}{bg=white}
 \fi
 
 
@@ -84,12 +91,12 @@
 %mismo estilo, sin numeros
 \lstdefinestyle{normalnonumbers}{language=C++,
    keywordstyle=\color{darkblue}\textbf,
-   stringstyle=\color{red},           
-   commentstyle=\color{darkgreen},    
+   stringstyle=\color{red},
+   commentstyle=\color{darkgreen},
    basicstyle=\color{black}\ttfamily\footnotesize\bfseries,
    morecomment=[l][\color{magenta}]{\#},
-   ndkeywords={NULL,nullptr,move,add},          
-   ndkeywordstyle=\color{violet}, 
+   ndkeywords={NULL,nullptr,move,add},
+   ndkeywordstyle=\color{violet},
    frame=simple,
    basewidth={0.55em,0.55em}
 }
@@ -104,7 +111,7 @@
    basicstyle=\color{black!30}\ttfamily\footnotesize\bfseries,
    morecomment=[l][\color{magenta!30}]{\#},
    ndkeywords={NULL,nullptr,siz,zer,mov,add},
-   ndkeywordstyle=\color{violet!30}, 
+   ndkeywordstyle=\color{violet!30},
    moredelim=**[is][\only<+->{\color{black}\lstset{style=normal}}]{@}{@}, % definimos que las lineas entre arrobas (@) tendran el estilo normal (con los colores a toda intensidad)
    frame=simple,
    basewidth={0.55em,0.55em}
@@ -116,7 +123,7 @@
    basicstyle=\color{black!30}\ttfamily\footnotesize\bfseries,
    morecomment=[l][\color{magenta!30}]{\#},
    ndkeywords={NULL,nullptr,siz,zer,mov,add},
-   ndkeywordstyle=\color{violet!30}, 
+   ndkeywordstyle=\color{violet!30},
    moredelim=**[is][{\color{black}\lstset{style=normal}}]{@}{@}, % definimos que las lineas entre arrobas (@) tendran el estilo normal (con los colores a toda intensidad)
    frame=simple,
    basewidth={0.55em,0.55em}
@@ -170,10 +177,10 @@
 
 % Pone las constantes numericas con color (violeta en este caso):
 % - los numeros que estan dentro de un string/comentarios NO son coloreados
-% - los numeros por fuera que pertenecen a una palabra SON coloreados 
+% - los numeros por fuera que pertenecen a una palabra SON coloreados
 %   (buf1, por ejemplo, el "1" es coloreado cuando no lo deberias. UPS!!)
 % - No incluye el signo
-% 
+%
 %\lstset{literate=%
 %  *{0}{{{\color{violet}0}}}1
 %   {1}{{{\color{violet}1}}}1
@@ -188,7 +195,7 @@
 %}
 
 % Para resaltar lineas de codigo usando \btLstHLB{range} y \btLstHLB<overlay>{range}:
-% Por ejemplo, 
+% Por ejemplo,
 %  \btLstHLB{3}       linea 3 resaltada
 %  \btLstHLB{1-5}     lineas de la 1 a la 5 resaltadas
 %  \btLstHLB<2>{3}    linea 3 resaltada solo en el slide 2
@@ -248,7 +255,11 @@
 % sin fecha
 \date{}
 
-\author[7542]{Di Paola Mart\'in \\ \texttt{martinp.dipaola <at> gmail.com} }
+\if\pptsupportmode1
+% no author in ppt mode, let others to put its name
+\else
+    \author[7542-9508]{Di Paola Mart\'in \\ \texttt{martinp.dipaola <at> gmail.com} }
+\fi
 
 \institute[Universidad de Buenos Aires]
 {

@@ -24,13 +24,18 @@ MAIN=$(shell basename $(CURDIR))
 all: pdf handout
 
 pdf: _prepare
-	latex ${COMPILE_FLAGS} '\def\handoutmode{0}\input{${MAIN}}'
-	latex ${COMPILE_FLAGS} '\def\handoutmode{0}\input{${MAIN}}'
+	latex ${COMPILE_FLAGS} '\def\handoutmode{0}\def\pptsupportmode{0}\input{${MAIN}}'
+	latex ${COMPILE_FLAGS} '\def\handoutmode{0}\def\pptsupportmode{0}\input{${MAIN}}'
 	cp ${TMP}/${MAIN}.pdf ${MAIN}.pdf
 
+ppt: _prepare
+	latex ${COMPILE_FLAGS} '\def\handoutmode{0}\def\pptsupportmode{1}\input{${MAIN}}'
+	latex ${COMPILE_FLAGS} '\def\handoutmode{0}\def\pptsupportmode{1}\input{${MAIN}}'
+	cp ${TMP}/${MAIN}.pdf ${MAIN}-for-ppt.pdf
+
 handout:  _prepare
-	latex -output-directory=tmp -output-format=pdf '\def\handoutmode{1}\input{${MAIN}}'
-	latex -output-directory=tmp -output-format=pdf '\def\handoutmode{1}\input{${MAIN}}'
+	latex -output-directory=tmp -output-format=pdf '\def\handoutmode{1}\def\pptsupportmode{0}\input{${MAIN}}'
+	latex -output-directory=tmp -output-format=pdf '\def\handoutmode{1}\def\pptsupportmode{0}\input{${MAIN}}'
 	pdfnup ${TMP}/${MAIN}.pdf --nup 2x3 --no-landscape --paper letterpaper --frame True --suffix "handout"
 
 
