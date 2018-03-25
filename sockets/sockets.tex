@@ -1,0 +1,448 @@
+\input{../preamble.tex}
+
+\title%
+{Introducci\'on a Sockets TCP en C}
+
+
+\subject{Introducci\'on a Sockets TCP en C}
+
+
+\begin{document}
+
+\begin{frame}
+   \titlepage
+\end{frame}
+
+\begin{frame}{De qu\'e va esto?}
+   \tableofcontents
+   % You might wish to add the option [pausesections]
+\end{frame}
+
+\section{Resoluci\'on de nombres}
+\subsection*{}
+\begin{frame}{Resoluci\'on de nombres: desde donde quiero escuchar}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0002.pdf}
+        };
+    \end{tikzpicture}
+ \end{frame}
+\note[itemize] {
+\item El servidor tiene que definir desde donde quiere recibir las conexiones.
+\item Hay m\'as esquemas posibles pero solo nos interesa definir la IP y el puerto del servidor.
+\item Sin embargo, hardcodear la IP y/o el puerto es una mala pr\'actica. Mejor es usar nombres simb\'olicos: host name y service name.
+\item La funci\'on \lstinline[style=normal]!getaddrinfo! se encargara de resolver esos nombres y llevarlos a IPs y puertos.
+}
+
+\begin{frame}{Resoluci\'on de nombres: a quien me quiero conectar}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0003.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Familias y tipos de sockets}
+   \begin{itemize}
+     \item<1-> Familia \lstinline[style=normal]!AF_UNIX!: para la comunicaci\'on entre procesos locales.
+     \item<2-> Familias \lstinline[style=normal]!AF_INET! (IPv4) y \lstinline[style=normal]!AF_INET6! (IPv6): para la comunicaci\'on a traves de la Internet.
+    \end{itemize}
+    \begin{itemize}
+        \item<3-> Tipo \lstinline[style=normal]!SOCK_DGRAM! (UDP): Sin conexi\'on. Orientado a mensajes (datagramas). Los mensajes se pierden, duplican y llegan en desorden.
+        \item<4-> Tipo \lstinline[style=normal]!SOCK_STREAM! (TCP): Con conexi\'on, full-duplex. Orientado al streaming. Los bytes llegan en orden y sin p\'erdidas. \alert{An\'alogo a un archivo binario secuencial.}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Resoluci\'on de nombres}
+    Cliente
+      \begin{lstlisting}[style=normal]
+memset(&hints, 0, sizeof(struct addrinfo));
+hints.ai_family   = AF_INET;      /* IPv4  */
+hints.ai_socktype = SOCK_STREAM;  /* TCP   */
+hints.ai_flags    = 0;
+
+status = getaddrinfo("fi.uba.ar", "http", &hints, &results);
+      \end{lstlisting}
+    Servidor
+      \begin{lstlisting}[style=normal]
+memset(&hints, 0, sizeof(struct addrinfo));
+hints.ai_family   = AF_INET;      /* IPv4  */
+hints.ai_socktype = SOCK_STREAM;  /* TCP   */
+hints.ai_flags    = AI_PASSIVE;
+
+status = getaddrinfo(0 /* ANY */, "http", &hints, &results);
+      \end{lstlisting}
+\end{frame}
+
+%\begin{frame}[fragile]{Resoluci\'on de nombres}{No hardcodeen las IPs ni los puertos}
+%      \begin{lstlisting}[style=normal]
+%#define _POSIX_C_SOURCE 1
+%
+%struct addrinfo hints, *results, *addr;
+%
+%int status = getaddrinfo(
+%                hostname,
+%                service,
+%                &hints,   // <- el filtro
+%                &results  // <- lista de direcciones
+%            );
+%/* ... */
+%
+%freeaddrinfo(results);
+%
+%      \end{lstlisting}
+%\end{frame}
+
+\section{Canal de comunicaci\'on TCP}
+\subsection{Establecimiento de un canal}
+\begin{frame}{Creaci\'on de un socket}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0004.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item Crear un socket no es nada mas que crear un file descriptor al igual que cuando abrimos un archivo.
+}
+
+
+\begin{frame}{Enlazado de un socket a una direcci\'on}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0005.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item A los sockets se los puede enlazar o atar a una direcci\'on IP y puerto local para que el sistema operativo sepa desde donde puede enviar y recibir conexiones y mensajes.
+\item El uso mas t\'ipico de \lstinline[style=normal]!bind! se da del lado del servidor cuando este dice "quiero escuchar conexiones desde mi IP p\'ublica y en este puerto".
+\item Sin embargo el cliente tambi\'en puede hacer \lstinline[style=normal]!bind! por razones un poco mas esot\'ericas.
+}
+
+\begin{frame}{Socket aceptador o pasivo}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0006.pdf}
+            \includegraphics<2>[width=\paperwidth]{overview_slides/pg_0007.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item Una vez enlazado le decimos al sistema operativo que queremos escuchar conexiones en esa IP/puerto.
+\item La funci\'on \lstinline[style=normal]!listen! define hasta cuantas conexiones en "espera de ser aceptadas" el sistema operativo puede guardar.
+\item La funci\'on \lstinline[style=normal]!listen! NO define un l\'imite de las conexiones totales (en espera + las que estan ya aceptadas). No confundir!
+\item Ahora el servidor puede esperar a que alguien quiera conectarse y aceptar la conexi\'on con la funci\'on \lstinline[style=normal]!accept!.
+\item La funci\'on \lstinline[style=normal]!accept! es bloqueante.
+}
+
+\begin{frame}{Conexi\'on con el servidor: estableciendo conexi\'on}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0008.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item El cliente usa su socket para conectarse al servidor. La operaci\'on \lstinline[style=normal]!connect! es bloqueante.
+}
+
+\begin{frame}{Conexi\'on con el servidor: aceptando la conexi\'on}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0009.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item La conexi\'on es aceptada por el servidor: la funci\'on \lstinline[style=normal]!accept! se desbloquea y retorna un nuevo socket que representa a la nueva conexi\'on.
+}
+
+\subsection{Envio y recepci\'on de datos}
+\begin{frame}{Conexi\'on establecida}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0010.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item El socket \lstinline[style=normal]!acep! sigue estando disponible para que el servidor acepte a otras conexiones en paralelo mientras antiende a sus clientes (es independiente del socket \lstinline[style=normal]!srv!)
+\item Al mismo tiempo, el socket \lstinline[style=normal]!srv! quedo asociado a esa conexi\'on en particular y le permitir\'a al servidor enviar y recibir mensajes de su cliente.
+\item Tanto el cliente como el servidor se pueden enviar y recibir mensajes (\lstinline[style=normal]!send!/\lstinline[style=normal]!recv!) entre ellos.
+\item Los mensajes/bytes enviados con \lstinline[style=normal]!cli.send! son recibidos por el servidor con \lstinline[style=normal]!srv.recv!.
+\item De igual modo el cliente recibe con \lstinline[style=normal]!cli.recv! los bytes enviados por el servidor con \lstinline[style=normal]!srv.send!.
+}
+
+\begin{frame}{Envio y recepci\'on de datos}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0011.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item El par \lstinline[style=normal]!cli.send!--\lstinline[style=normal]!srv.recv! forma un canal en una direcci\'on mientras que el par \lstinline[style=normal]!srv.send!--\lstinline[style=normal]!cli-recv! forma otro canal en el sentido opuesto.
+\item Ambos canales son independientes. Esto se lo conoce como comunicaci\'on Full Duplex
+\item TCP garantiza que los bytes enviados llegaran en el mismo orden, sin repeticiones y sin p\'erdidas del otro lado.
+\item Otro protocolos como UDP no son tan robustos...
+}
+\begin{frame}{Envio y recepci\'on de datos en la realidad}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0012.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+\begin{frame}{Envio y recepci\'on de datos en la realidad}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0020.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item Sin embargo TCP NO garantiza que todos los bytes pasados a \lstinline[style=normal]!send! se puedan enviar en un solo intento: el programador debera hacer m\'ultiples llamadas a \lstinline[style=normal]!send!.
+\item De igual modo, no todo lo enviado sera recibido en una \'unica llamada a \lstinline[style=normal]!recv!: el programador debera hacer m\'ultiples llamadas a \lstinline[style=normal]!recv!.
+}
+
+\begin{frame}[fragile]{Envio y recepci\'on de datos}
+      \begin{lstlisting}[style=normal]
+int s = send(skt,
+              buf,
+              bytes_to_sent,
+              flags           // MSG_NOSIGNAL
+            );
+
+int s = recv(skt,
+              buf,
+              bytes_to_recv,
+              flags           // MSG_NOSIGNAL
+            );
+
+   (s < 0)  // Error inesperado
+  (s == 0)  // El socket fue cerrado
+   (s > 0)  // Ok: s bytes fueron enviados/recibidos
+      \end{lstlisting}
+\end{frame}
+
+
+\begin{frame}[fragile]{Recepci\'on de datos incremental}
+      \begin{lstlisting}[style=normal]
+char buf[MSG_LEN];  // buffer donde guardar los datos
+int bytes_recv = 0;
+
+while (MSG_LEN > bytes_recv && skt_still_open) {
+  s = recv(skt, &buf[bytes_recv], MSG_LEN - bytes_recv - 1,
+                                                MSG_NOSIGNAL);
+  if (s < 0) { // Error inesperado
+     /* ... */
+  }
+  else if (s == 0) { // Nos cerraron el socket
+     /* ... */
+  }
+  else {
+    bytes_recv += s;
+  }
+}
+      \end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{Envio de datos incremental}
+      \begin{lstlisting}[style=normal]
+char buf[MSG_LEN];    // buffer con los datos a enviar
+int bytes_sent = 0;
+
+while (MSG_LEN > bytes_sent && skt_still_open) {
+  s = send(skt, &buf[bytes_sent], MSG_LEN - bytes_sent,
+                                              MSG_NOSIGNAL);
+  if (s < 0) { // Error inesperado
+     /* ... */
+  }
+  else if (s == 0) { // Nos cerraron el socket
+     /* ... */
+  }
+  else {
+    bytes_sent += s;
+  }
+}
+      \end{lstlisting}
+\end{frame}
+
+\subsection{Finalizaci\'on de un canal}
+\begin{frame}{Cierre de conexi\'on parcial}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0013.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Cierre de conexi\'on total}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0014.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item Parcial en un sentido (envio) \lstinline[style=normal]!SHUT_WR!
+\item Parcial en el otro sentido (recepci\'on) \lstinline[style=normal]!SHUT_RD!
+\item Total en ambos sentidos \lstinline[style=normal]!SHUT_RDWR!
+}
+
+\begin{frame}{Liberaci\'on de los recursos con close}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0015.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Cierre y liberaci\'on del socket aceptador}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0016.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{TIME WAIT}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0017.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}[fragile]{TIME WAIT -> Reuse Address}
+Si el puerto 80 esta en el estado TIME WAIT, esto termina en error (Address Already in Use):
+      \begin{lstlisting}[style=normal]
+int acep   = socket(...);
+int status = bind(acep, ...); //bind al puerto 80
+      \end{lstlisting}
+\pause
+La soluci\'on es configurar al socket aceptador para que pueda reusar la direcci\'on:
+      \begin{lstlisting}[style=normal]
+int acep   = socket(...);
+
+int val = 1;
+setsockopt(acep, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
+
+int status = bind(acep, ...); //bind al puerto 80
+      \end{lstlisting}
+\end{frame}
+
+\section{Protocolos y formatos}
+\subsection*{}
+\begin{frame}[fragile]{Binario o Texto}
+    \begin{itemize}
+        \item Protocolos en Binario: son simples y eficientes en terminos de memoria y velocidad de procesamiento. Son m\'as dif\'iciles de debuggear. Es necesario tomar en consideraci\'on el endianess, el padding, los tama\~nos y los signos.
+        \item Protocolos en Texto: son la contracara de los protocolos binarios, son lentos, ineficientes y m\'as dif\'iciles de parsear pero m\'as f\'aciles de debuggear. Son independientes del endianess, padding y otros pero dependen del encoding del texto y que caracteres se usan como delimitadores.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Longitud variable: delimitador}
+    Delimitador: el mensaje no tiene un tama\~no fijo y el fin del mensaje esta marcado por un delimitador.
+    \begin{lstlisting}[style=normalhttp]
+GET /index.html HTTP/1.1\r\n
+Host: www.fi.uba.ar\r\n
+\r\n
+    \end{lstlisting}
+    \begin{itemize}
+        \item En HTTP el fin del mensaje esta dado por una l\'inea vacia; cada l\'inea esta delimitada por un \lstinline[style=normalhttp]!\r\n!
+        \item Cuantos bytes reservar\'ian para contener dicho mensaje o alguna l\'inea?
+        \item Que pasa si el delimitador \lstinline[style=normalhttp]!\r\n! aparece en el medio de una l\'inea, como lo diferenciar\'ian?
+    \end{itemize}
+\end{frame}
+\note[itemize] {
+\item Habitualmente en protocolos en texto se usa uno o una secuencia de caracteres como delimitadores.
+\item En la cabezera de HTTP se usa \lstinline[style=normal]!\\r\\n!
+\item En C/C++, los fin de strings son marcados con \lstinline[style=normal]!\\0!
+\item Aunque simple, no es trivial saber cuantos bytes hay hasta el delimitador.
+\item Tampoco es trivial el caso de que el texto contenga al delimitador meramente por que es parte de su contenido.
+\item Hay dos opciones, o se opta por otro protocolo o se usa una secuencia de escape para que el delimitador sea considerado un literal y no un delimitador.
+\item Y si la secuencia de escape es parte del contenido? Hay que escapear la secuencia de escape con otra secuencia de escape.
+\item Por ejemplo, el compilador de C/C++ ve \lstinline[style=normal]!"\\1"! como un string con el byte 1 (a pesar de haber 2 caracteres). Si se quisiera literalmente poner una barra y un 1 hay que escapear la barra: \lstinline[style=normal]!"\\\\1"!
+}
+
+\begin{frame}[fragile]{Longitud variable: prefijo con la longitud}
+    \begin{lstlisting}[style=normal]
+struct Msj {
+    unsigned short type;
+    unsigned short length;
+    char* value;
+};
+
+read(fd, &msj.type, sizeof(unsigned short) * 2);
+msj.value = (char*) malloc(msj.length);
+read(fd, msj.value, msj.length);
+    \end{lstlisting}
+    \begin{itemize}
+        \item Los primeros 4 bytes indican la longitud y tipo del valor; el resto de los bytes son el valor en s\'i.
+        \item Por qu\'e es importante usar \lstinline[style=normal]!unsigned short! y no solamente \lstinline[style=normal]!short!? Qu\'e pasa si \lstinline[style=normal]!sizeof(unsigned short)! no es 2?
+        \item Que pasa si el endianess no coincide? y si hay padding entre los dos primeros campos?
+    \end{itemize}
+\end{frame}
+\note[itemize] {
+\item Prefijar la longitud del mensaje soluciona varios problemas pero trae otros.
+\item Si \lstinline[style=normal]!sizeof(unsigned short)! vale 4 estar\'iamos enviando 8 bytes con las longitud y tipo pero la m\'aquina que recibe el mensaje puede esperar 4.
+\item Hay que definir y forzar un endianess y reglas de padding.
+}
+
+\section{Netstat}
+\subsection*{}
+\begin{frame}[fragile,label=netstat]{Netstat}
+      \begin{lstlisting}[style=normal]
+machineA$ nc -l 1234 &
+machineA$ nc -l 8080 &
+machineA$ nc 127.0.0.1 8080 &
+
+machineA$ netstat -tauon
+Active Internet connections (servers and established)
+Proto Local Address       Foreign Address      State
+tcp   127.0.0.1:1234      0.0.0.0:*            LISTEN
+tcp   127.0.0.1:8080      127.0.0.1:33036      ESTABLISHED
+tcp   127.0.0.1:33036     127.0.0.1:8080       ESTABLISHED
+      \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile,label=netstat2]{Netstat}
+      \begin{lstlisting}[style=normal]
+machineA$ sudo killall -9 nc
+
+machineA$ netstat -tauon
+Active Internet connections (servers and established)
+Proto Local Address       Foreign Address      State
+tcp   127.0.0.1:8080      127.0.0.1:33036      TIME_WAIT
+
+      \end{lstlisting}
+\end{frame}
+
+
+\appendix
+\section<presentation>*{\appendixname}
+\subsection<presentation>*{Referencias}
+
+\begin{frame}[allowframebreaks]
+   \frametitle<presentation>{Referencias}
+
+   \begin{thebibliography}{10}
+
+         \beamertemplatearticlebibitems
+         % Followed by interesting articles. Keep the list short.
+
+      \bibitem{manpages}
+         man getaddrinfo
+      \bibitem{manpages}
+         man netcat
+      \bibitem{manpages}
+         man netstat
+
+
+
+   \end{thebibliography}
+\end{frame}
+
+\end{document}
+
+

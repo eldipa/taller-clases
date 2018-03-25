@@ -58,19 +58,20 @@ struct Vector {
         \begin{lstlisting}[style=normal,firstnumber=1,linebackgroundcolor={%
                  \btLstHLB<1>{3}%
                  \btLstHLB<2>{4,9}%
-                 \btLstHLB<3>{6}%
-                 \btLstHLB<4>{7}%
+                 \btLstHLB<3>{11}%
+                 \btLstHLB<4>{6}%
+                 \btLstHLB<5>{7}%
          }]
 // con punteros
 int foo() {
     Vector v(3);
     bar(&v);
-    
-    v.get(0); // 1
+
+    v.get(0);
 }
 
 void bar(Vector* w) {
-  for (int i = 0; /*...*/)  
+  for (int i = 0; /*...*/)
     w->set(i, 1);
 }
          \end{lstlisting}
@@ -85,10 +86,10 @@ void bar(Vector* w) {
             };
             \matrix (foo)[below =0.1em of stackname, space, column 1/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=5.5em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}] 
             {
-                {\visible<1->{v}}   & {\only<1-3>{v.data}\only<4>{XX}}  \\
-                                    & {\only<1-3>{v.size = 3}\only<4>{XX}}  \\
+                {\visible<1->{v}}   & {\only<1-4>{v.data}\only<5>{XX}}  \\
+                                    & {\only<1-4>{v.size = 3}\only<5>{XX}}  \\
             };
-             \matrix (bar)[nodevisible on={<2>}, below =0.1em of foo, space, column 1/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=5.5em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}] 
+             \matrix (bar)[nodevisible on={<2-3>}, below =0.1em of foo, space, column 1/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=5.5em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}] 
             {
                 {\visible<2->{w}}   & {\visible<2->{\&v}}  \\
             };
@@ -99,12 +100,12 @@ void bar(Vector* w) {
             };
              \matrix (heap)[below =0.1em of heapname, space, column 1/.style={nodes={cell,minimum width=2em}},column 2/.style={nodes={cell,minimum width=2em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}] 
             {
-                       {\only<1-2>{0}\only<3>{1}\only<4>{XX}} & {\only<1-2>{0}\only<3>{1}\only<4>{XX}} & {\only<1-2>{0}\only<3>{1}\only<4>{XX}} \\
+                       {\only<1-2>{0}\only<3-4>{1}\only<5>{XX}} & {\only<1-2>{0}\only<3-4>{1}\only<5>{XX}} & {\only<1-2>{0}\only<3-4>{1}\only<5>{XX}} \\
             };
-             
-             \draw [->, pointer, arrowvisible on={<2>}] (bar-1-2.west) to[out=115,in=245] (foo-1-2.west);
+
+             \draw [->, pointer, arrowvisible on={<2-3>}] (bar-1-2.west) to[out=115,in=245] (foo-1-2.west);
              \draw [->, pointer] (foo-1-2.east) to (heap.west);
-            
+
 
          \end{tikzpicture}
         \begin{onlyenv}<1>
@@ -116,7 +117,7 @@ void bar(Vector* w) {
   }
         \end{lstlisting}
         \end{onlyenv}
-        \begin{visibleenv}<4>
+        \begin{visibleenv}<5>
         \begin{lstlisting}[style=normal,firstnumber=10]
   ~Vector() { // destroy
     free(data);
@@ -133,19 +134,20 @@ void bar(Vector* w) {
         \begin{lstlisting}[style=normal,firstnumber=1,linebackgroundcolor={%
                  \btLstHLB<1>{3}%
                  \btLstHLB<2>{4,9}%
-                 \btLstHLB<3>{6}%
-                 \btLstHLB<4>{7}%
+                 \btLstHLB<3>{11}%
+                 \btLstHLB<4>{6}%
+                 \btLstHLB<5>{7}%
          }]
 // con referencias
 int foo() {
     Vector v(3);
     bar(v);
-    
-    v.get(0); // 1
+
+    v.get(0);
 }
 
 void bar(Vector& w) {
-  for (int i = 0; /*...*/)  
+  for (int i = 0; /*...*/)
     w.set(i, 1);
 }
          \end{lstlisting}
@@ -160,10 +162,10 @@ void bar(Vector& w) {
             };
             \matrix (foo)[below =0.1em of stackname, space, column 1/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=5.5em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}] 
             {
-                {\visible<1->{v}}   & {\only<1-3>{v.data}\only<4>{XX}}  \\
-                                    & {\only<1-3>{v.size = 3}\only<4>{XX}}  \\
+                {\visible<1->{v}}   & {\only<1-4>{v.data}\only<5>{XX}}  \\
+                                    & {\only<1-4>{v.size = 3}\only<5>{XX}}  \\
             };
-             \matrix (bar)[nodevisible on={<2>}, below =0.1em of foo, space, column 1/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=5.5em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}] 
+             \matrix (bar)[nodevisible on={<2-3>}, below =0.1em of foo, space, column 1/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=5.5em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}] 
             {
                 {\visible<2->{w}}   & {\visible<2->{\&v}}  \\
             };
@@ -174,12 +176,12 @@ void bar(Vector& w) {
             };
              \matrix (heap)[below =0.1em of heapname, space, column 1/.style={nodes={cell,minimum width=2em}},column 2/.style={nodes={cell,minimum width=2em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}] 
             {
-                       {\only<1-2>{0}\only<3>{1}\only<4>{XX}} & {\only<1-2>{0}\only<3>{1}\only<4>{XX}} & {\only<1-2>{0}\only<3>{1}\only<4>{XX}} \\
+                       {\only<1-2>{0}\only<3-4>{1}\only<5>{XX}} & {\only<1-2>{0}\only<3-4>{1}\only<5>{XX}} & {\only<1-2>{0}\only<3-4>{1}\only<5>{XX}} \\
             };
-             
-             \draw [->, pointer, arrowvisible on={<2>}] (bar-1-2.west) to[out=115,in=245] (foo-1-2.west);
+
+             \draw [->, pointer, arrowvisible on={<2-3>}] (bar-1-2.west) to[out=115,in=245] (foo-1-2.west);
              \draw [->, pointer] (foo-1-2.east) to (heap.west);
-            
+
 
          \end{tikzpicture}
         \begin{onlyenv}<1>
@@ -191,7 +193,7 @@ void bar(Vector& w) {
   }
         \end{lstlisting}
         \end{onlyenv}
-        \begin{visibleenv}<4>
+        \begin{visibleenv}<5>
         \begin{lstlisting}[style=normal,firstnumber=10]
   ~Vector() { // destroy
     free(data);
@@ -219,7 +221,7 @@ int* q;
 
 int i = 1, j = 2;
 
-int* r = &i; 
+int* r = &i;
 *r = j;
         \end{lstlisting}
       \end{column}
@@ -254,20 +256,21 @@ r = j;
         \begin{lstlisting}[style=normal,firstnumber=1,linebackgroundcolor={%
                  \btLstHLB<1>{3}%
                  \btLstHLB<2>{4,9}%
-                 \btLstHLB<3>{12}%
-                 \btLstHLR<4>{6}%
-                 \btLstHLR<5>{7}%
+                 \btLstHLB<3>{11}%
+                 \btLstHLB<4>{12}%
+                 \btLstHLR<5>{6}%
+                 \btLstHLR<6>{7}%
          }]
 // por copia
 int foo() {
     Vector v(3);
     bar(v);
-    
-    v.get(0); // ??
+
+    v.get(0);
 }
 
 void bar(Vector w) {
-  for (int i = 0; /*...*/)  
+  for (int i = 0; /*...*/)
     w.set(i, 1);
 }
          \end{lstlisting}
@@ -282,27 +285,27 @@ void bar(Vector w) {
             };
             \matrix (foo)[below =0.1em of stackname, space, column 1/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=5.5em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}] 
             {
-                {\visible<1->{v}}   & {\only<1-4>{v.data}\only<5>{XX}}  \\
-                                    & {\only<1-4>{v.size = 3}\only<5>{XX}}  \\
+                {\visible<1->{v}}   & {\only<1-5>{v.data}\only<6>{XX}}  \\
+                                    & {\only<1-5>{v.size = 3}\only<6>{XX}}  \\
             };
-             \matrix (bar)[nodevisible on={<2-3>}, below =0.1em of foo, space, column 1/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=5.5em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}] 
+             \matrix (bar)[nodevisible on={<2-4>}, below =0.1em of foo, space, column 1/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=5.5em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}] 
             {
-                {\visible<1->{w}}   & {\only<1-2>{w.data}\only<3>{XX}}  \\
-                                    & {\only<1-2>{w.size = 3}\only<3>{XX}}  \\
+                {\visible<1->{w}}   & {\only<1-3>{w.data}\only<4>{XX}}  \\
+                                    & {\only<1-3>{w.size = 3}\only<4>{XX}}  \\
             };
 
             \matrix (heapname)[right=2em of foo, space, column 1/.style={font=\ttfamily},column 2/.style={font=\ttfamily,nodes={minimum width=5.5em}}] 
             {
                    & {heap}  \\
             };
-             \matrix (heap)[nodevisible on={<1-3>}, below =0.1em of heapname, space, column 1/.style={nodes={cell,minimum width=2em}},column 2/.style={nodes={cell,minimum width=2em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}] 
+             \matrix (heap)[nodevisible on={<1-4>}, below =0.1em of heapname, space, column 1/.style={nodes={cell,minimum width=2em}},column 2/.style={nodes={cell,minimum width=2em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}] 
             {
-                       {\only<1-2>{0}\only<3-4>{XX}} & {\only<1-2>{0}\only<3-4>{XX}} & {\only<1-2>{0}\only<3-4>{XX}} \\
+                       {\only<1-2>{0}\only<3>{1}\only<4-5>{XX}} & {\only<1-2>{0}\only<3>{1}\only<4-5>{XX}} & {\only<1-2>{0}\only<3>{1}\only<4-5>{XX}} \\
             };
-             
+
              \draw [->, pointer] (foo-1-2.east) to (heap.west);
-             \draw [->, pointer, arrowvisible on={<2-3>}] (bar-1-2.east) to (heap.west);
-            
+             \draw [->, pointer, arrowvisible on={<2-4>}] (bar-1-2.east) to (heap.west);
+
          \end{tikzpicture}
         \begin{onlyenv}<1>
         \begin{lstlisting}[style=normal,firstnumber=5]
@@ -316,13 +319,13 @@ void bar(Vector w) {
         \begin{onlyenv}<2>
 Constructor por copia por default.
         \end{onlyenv}
-        \begin{onlyenv}<4>
+        \begin{onlyenv}<5>
 Use after free!!
         \end{onlyenv}
-        \begin{onlyenv}<5>
+        \begin{onlyenv}<6>
 Double free!!
         \end{onlyenv}
-        \begin{visibleenv}<3,5>
+        \begin{visibleenv}<4,6>
         \begin{lstlisting}[style=normal,firstnumber=10]
   ~Vector() { // destroy
     free(data);
@@ -376,12 +379,12 @@ struct Vector {
 int foo() {
     Vector v(3);
     bar(v);
-    
-    v.get(0); // 0
+
+    v.get(0);
 }
 
 void bar(Vector w) {
-  for (int i = 0; /*...*/)  
+  for (int i = 0; /*...*/)
     w.set(i, 1);
 }
          \end{lstlisting}
@@ -417,10 +420,10 @@ void bar(Vector w) {
             {
                        {\only<1-2>{0}\only<3-4>{XX}} & {\only<1-2>{0}\only<3-4>{XX}} & {\only<1-2>{0}\only<3-4>{XX}} \\
             };
-             
+
              \draw [->, pointer] (foo-1-2.east) to (heap.west);
              \draw [->, pointer, arrowvisible on={<2-3>}] (bar-1-2.east) to (heap2.west);
-            
+
          \end{tikzpicture}
         \begin{onlyenv}<1>
         \begin{lstlisting}[style=normal,firstnumber=5]
@@ -483,14 +486,14 @@ void bar(Vector w) {
             {
                        {0} & {0} & {0} \\
             };
-             \matrix (heap2)[below =0.1em of heap, space, column 1/.style={nodes={cell,minimum width=2em}},column 2/.style={nodes={cell,minimum width=2em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}] 
+             \matrix (heap2)[below =0.1em of heap, space, column 1/.style={nodes={cell,minimum width=2em}},column 2/.style={nodes={cell,minimum width=2em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}]
             {
                        {1} & {1} & {1} \\
             };
-             
+
              \draw [->, pointer] (foo-1-2.east) to (heap.west);
              \draw [->, pointer] (bar-1-2.east) to (heap2.west);
-            
+
          \end{tikzpicture}
 
       \end{column}
@@ -514,14 +517,14 @@ void bar(Vector w) {
             {
                    & {heap}  \\
             };
-             \matrix (heap)[below =0.1em of heapname, space, column 1/.style={nodes={cell,minimum width=2em}},column 2/.style={nodes={cell,minimum width=2em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}] 
+             \matrix (heap)[below =0.1em of heapname, space, column 1/.style={nodes={cell,minimum width=2em}},column 2/.style={nodes={cell,minimum width=2em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}]
             {
                        {0} & {0} & {0} \\
             };
-             
+
              \draw [->, pointer] (foo-1-2.east) to (heap.west);
              \draw [->, pointer] (bar-1-2.east) to (heap.west);
-         \end{tikzpicture} 
+         \end{tikzpicture}
       \end{column}
    \end{columns}
 \end{frame}
@@ -546,7 +549,7 @@ struct Vector {
   }
 
   ~Vector() {
-      if (data) 
+      if (data)
           free(data);
   }
 };
@@ -573,14 +576,14 @@ struct Vector {
 int foo() {
     Vector v(3);
     bar(std::move(v));
-    
+
     v.get(0); // ??
 }
 
 void bar(Vector w) {
-  for (int i = 0; /*...*/)  
+  for (int i = 0; /*...*/)
     w.set(i, 1);
-} 
+}
          \end{lstlisting}
 
       \end{column}
@@ -606,14 +609,14 @@ void bar(Vector w) {
             {
                    & {heap}  \\
             };
-             \matrix (heap)[nodevisible on={<1-3>}, below =0.1em of heapname, space, column 1/.style={nodes={cell,minimum width=2em}},column 2/.style={nodes={cell,minimum width=2em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}] 
+             \matrix (heap)[nodevisible on={<1-3>}, below =0.1em of heapname, space, column 1/.style={nodes={cell,minimum width=2em}},column 2/.style={nodes={cell,minimum width=2em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}]
             {
                        {\only<1-2>{0}\only<3>{XX}} & {\only<1-2>{0}\only<3>{XX}} & {\only<1-2>{0}\only<3>{XX}} \\
             };
-             
+
              \draw [->, pointer, arrowvisible on={<1>}] (foo-1-2.east) to (heap.west);
              \draw [->, pointer, arrowvisible on={<2-3>}] (bar-1-2.east) to (heap.west);
-            
+
          \end{tikzpicture}
         \begin{onlyenv}<1>
         \begin{lstlisting}[style=normal,firstnumber=5]
@@ -653,21 +656,60 @@ Pero no hay un double free.
    \end{columns}
 \end{frame}
 
-\begin{frame}[fragile]{Ej Retorno por movimiento: accept de un Socket}{}
+\begin{frame}[fragile]{Motivaci\'on: retorno de un Socket}{}
+Por referencia? \only<2->{Ineficiente o viola RAII}
         \begin{lstlisting}[style=normal,firstnumber=1]
-struct Socket {
-    // pero si movible
-    Socket(Socket&& s) { /* ... */ }
-
-    Socket accept() {
-        int skt_fd = ::accept(/*...*/); // accept de C
-        Socket accepted(skt_fd); 
-
-        return accepted; // retorno por movimiento: super!
-        // return std::move(accepted); 
-    }
-};
+Socket s;
+acep.accept(s);
         \end{lstlisting}
+
+        \begin{lstlisting}[style=normal,firstnumber=10]
+void accept(Socket &s) {
+    close(s.fd);
+    s.fd = ::accept(/*...*/); // accept de C
+}
+        \end{lstlisting}
+
+        \pause
+        \pause
+Usando el heap? \only<4->{Y si nos olvidamos del \lstinline[style=normal]!delete!?}
+        \begin{lstlisting}[style=normal,firstnumber=1]
+Socket *s = acep.accept();
+        \end{lstlisting}
+        \begin{lstlisting}[style=normal,firstnumber=10]
+Socket* accept() {
+    int fd = ::accept(/*...*/); // accept de C
+    return new Socket(fd);
+}
+        \end{lstlisting}
+        \pause
+        \pause
+Retornar una copia? \only<6->{Tiene sentido? Simplemente No.}
+
+\end{frame}
+\note[itemize] {
+\item Por referencia: Ineficiente, creamos un \lstinline[style=normal]!fd! para cerrarlo y asignar otro.
+\item Por referencia: O bien, el constructor de \lstinline[style=normal]!Socket! no abren ningun \lstinline[style=normal]!fd! (pero entonces no ser\'ian RAII)
+\item Por heap: El constructor \lstinline[style=normal]!Socket(int)! debe ser privado.
+\item Por heap: Perdemos la ventaja de usar el stack.
+}
+
+\begin{frame}[fragile]{Soluci\'on?: Mover el Socket!!}{}
+Por movimiento!
+        \begin{lstlisting}[style=normal,firstnumber=1]
+Socket s = acep.accept();
+        \end{lstlisting}
+        \begin{lstlisting}[style=normal,firstnumber=10]
+Socket accept() {
+    int fd = ::accept(/*...*/); // accept de C
+    return std::move(Socket(fd));
+}
+        \end{lstlisting}
+   \begin{itemize}
+	   \item El constructor \lstinline[style=normal]!Socket(int)! debe ser privado.
+	   \item El socket creado dentro del m\'etodo \lstinline[style=normal]!accept! es movido hacia afuera.
+	   \item Todos los objetos involucrados viven en el stack y por lo tanto se destruyen autom\'aticamente.
+   \end{itemize}
 \end{frame}
 \note[itemize] {
 \item El m\'etodo \lstinline[style=normal]!accept! retorna un nuevo objeto \lstinline[style=normal]!Socket!.
@@ -677,18 +719,18 @@ struct Socket {
 }
 
 
-\begin{frame}[fragile]{Ej Pasaje por movimiento: pasando objetos a un hilo}{}
+\begin{frame}[fragile]{Otro ejemplo: pasando objetos a un hilo}{}
         \begin{lstlisting}[style=normal,firstnumber=10]
 std::thread aceptar_un_cliente(Socket &aceptador) {
     Socket skt_cliente = aceptador.accept();
 
     // movimiento de un socket, todo ok
-    std::thread t {manejador_del_cliente, 
+    std::thread t {manejador_del_cliente,
                    std::move(skt_cliente)};
 
     return std::move(t);
 } // <--el socket skt_cliente se destruye, pero como se movio
-  // no deberia pasar nada (siempre que se implemente el 
+  // no deberia pasar nada (siempre que se implemente el
   // constructor por movimiento y el destructor acorde!)
 
         \end{lstlisting}
@@ -779,7 +821,7 @@ struct Vector {
 
     if (this->data)
         free(this->data);
-    
+
     this->data = other.data;
     this->size = other.size;
 
@@ -810,71 +852,71 @@ void swap(Vector& a, Vector& b) {
 \end{frame}
 
 
-\begin{frame}[plain, fragile]{}{}
-   \begin{columns}[T]
-      \begin{column}{.5\linewidth}
-         \begin{lstlisting}[style=normal,numbers=none]
-void _copy(const Vector &other) {
-  data = malloc(other.size*
-                sizeof(int));
-  size = other.size;
-  memcpy(data, other.data, size);
-}
-
-Vector(const Vector &other) {
-  _copy(other);
-}
-
-Vector& 
-operator=(const Vector &other) {
-  if (this == &other)
-    return *this;
-
-  !data || free(data);
-  _copy(other);
-  return *this;
-}
-  
-         \end{lstlisting}
-      \end{column}
-      \begin{column}{.45\linewidth}
-         \begin{lstlisting}[style=normal,numbers=none]
-void _move(Vector&& other) {
-  data = other.data;
-  size = other.size;
-  other.data = nullptr;
-  other.size = 0;
-}
-
-Vector(Vector&& other) {
-  _move(other);
-}
-
-Vector& 
-operator=(Vector&& other) {
-  if (this == &other)
-    return *this;
-
-  !data || free(data);
-  _move(other);
-  return *this;
-}
-         \end{lstlisting}
-      \end{column}
-   \end{columns}
-\end{frame}
+%\begin{frame}[plain, fragile]{}{}
+%   \begin{columns}[T]
+%      \begin{column}{.5\linewidth}
+%         \begin{lstlisting}[style=normal,numbers=none]
+%void _copy(const Vector &other) {
+%  data = malloc(other.size*
+%                sizeof(int));
+%  size = other.size;
+%  memcpy(data, other.data, size);
+%}
+%
+%Vector(const Vector &other) {
+%  _copy(other);
+%}
+%
+%Vector&
+%operator=(const Vector &other) {
+%  if (this == &other)
+%    return *this;
+%
+%  !data || free(data);
+%  _copy(other);
+%  return *this;
+%}
+%
+%         \end{lstlisting}
+%      \end{column}
+%      \begin{column}{.45\linewidth}
+%         \begin{lstlisting}[style=normal,numbers=none]
+%void _move(Vector&& other) {
+%  data = other.data;
+%  size = other.size;
+%  other.data = nullptr;
+%  other.size = 0;
+%}
+%
+%Vector(Vector&& other) {
+%  _move(other);
+%}
+%
+%Vector&
+%operator=(Vector&& other) {
+%  if (this == &other)
+%    return *this;
+%
+%  !data || free(data);
+%  _move(other);
+%  return *this;
+%}
+%         \end{lstlisting}
+%      \end{column}
+%   \end{columns}
+%\end{frame}
 
 \section{Objetos no copiables}
 \subsection*{Objetos no copiables}
 \begin{frame}[fragile]{ Objetos no copiables}{}
         \begin{lstlisting}[style=normal,firstnumber=1]
-struct Vector {
-  int *data;
-  int size;
+struct File {
+  public:
+  File copy(const char *to_where) { ... }
 
   private:
-  Vector(const Vector &other) = delete;
-  Vector& operator=(const Vector &other) = delete;
+  File(const File &other) = delete;
+  File& operator=(const File &other) = delete;
 
 };
         \end{lstlisting}

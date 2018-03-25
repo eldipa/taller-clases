@@ -1,2 +1,6 @@
 *.pdf
+*.ppt
+*.pptx
 */tmp/
+
+!*/bin/*

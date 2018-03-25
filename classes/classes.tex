@@ -420,9 +420,9 @@ struct Vector {
 // En C
 void g() {
   struct Vector v;
-  
+
   v.data;
-   
+
   vector_create(&v, 5);
   //...
 
@@ -438,12 +438,12 @@ void g() {
 // En C ++
 void g() {
   Vector v(5);
-  
+
   v.data;
-  
+
 
   //...
- 
+
 }
          \end{lstlisting}
      \end{column}
@@ -586,7 +586,7 @@ struct Vector {
   int get(int pos) const {
       return this->data[pos];
   }
-  
+
   /* ... */
 };
         \end{lstlisting}
@@ -657,7 +657,7 @@ struct Vector {
   int get(int pos) const {
       return this->data[pos];
   }
-  
+
   /* ... */
 };
         \end{lstlisting}
@@ -677,7 +677,7 @@ struct Vector {
 struct Vector {
   int *data;
   int size;
-  
+
   Vector(int size) {
     // atributos ya construidos;  aca solo los re-asigno
     this->data = malloc(size*sizeof(int));
@@ -692,8 +692,8 @@ struct Vector {
 struct Vector {
   int *data;
   int size;
-  
-  Vector(int size) : data(malloc(size*sizeof(int))), 
+
+  Vector(int size) : data(malloc(size*sizeof(int))),
                      size(size) {
 
   }
@@ -713,7 +713,7 @@ struct Vector {
 struct Vector {
   int * const data;
   const int size;
-  
+
   Vector(int size) {
     // atributos ya construidos;  aca solo los re-asigno
     this->data = malloc(size*sizeof(int));
@@ -729,8 +729,8 @@ struct Vector {
 struct Vector {
   int * const data;
   const int size;
-  
-  Vector(int size) : data(malloc(size*sizeof(int))), 
+
+  Vector(int size) : data(malloc(size*sizeof(int))),
                      size(size) {
 
   }
@@ -747,7 +747,7 @@ struct Vector {
 struct DoubleVector {
   Vector fg;
   Vector bg;
-  
+
   DoubleVector(int size) {
       // fg, bg??
   }
@@ -760,7 +760,7 @@ struct DoubleVector {
 struct DoubleVector {
   Vector fg;
   Vector bg;
-  
+
   DoubleVector(int size) : fg(size), bg(size) {
   }
 }
@@ -774,10 +774,10 @@ struct DoubleVector {
     \begin{lstlisting}[style=normal,firstnumber=1]
 struct DoubleVector {
   DoubleVector(int size) : fg(size), bg(size) { }
-  
+
   DoubleVector(int size, int val) : fg(size), bg(size) {
       for (int i = 0; i < size; ++i) {
-          fg.set(i, val);    
+          fg.set(i, val);
           bg.set(i, val);
       }
         \end{lstlisting}
@@ -785,10 +785,10 @@ struct DoubleVector {
     \begin{lstlisting}[style=normal,firstnumber=1]
 struct DoubleVector {
   DoubleVector(int size) : fg(size), bg(size) { }
-  
+
   DoubleVector(int size, int val) : DoubleVector(size) {
       for (int i = 0; i < size; ++i) {
-          fg.set(i, val);      
+          fg.set(i, val);
           bg.set(i, val);
       }
         \end{lstlisting}

@@ -34,7 +34,7 @@ char a[] = "AB";@
          \end{lstlisting}
    \begin{itemize}
       \item<1-> Todo depende de la arquitectura y del compilador
-      \item<2-> Alineaci\'on y padding 
+      \item<2-> Alineaci\'on y padding
       \item<4-> Punteros del mismo tama\~no
       \item<6-> Un cero como "fin de string"
    \end{itemize}
@@ -45,8 +45,8 @@ char a[] = "AB";@
       \begin{column}{.30\linewidth}
          \begin{tikzpicture}[cell/.style={rectangle,draw=black},
             space/.style={minimum height=1.5em,matrix of nodes,row sep=-\pgflinewidth,column sep=-\pgflinewidth,column 1/.style={font=\ttfamily}},text depth=0.5ex,text height=2ex,nodes in empty cells]
-            
-            \matrix (first)[space, column 1/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=2em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}] 
+
+            \matrix (first)[space, column 1/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=2em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}]
             {
                {\visible<1->{c}}   & {\visible<1->{65}} & |[fill=gray]| &  |[fill=gray]| &  |[fill=gray]| \\
                {\visible<2->{i}}   & {\visible<2->{0}} & {\visible<2->{0}} & {\visible<2->{0}} & {\visible<2->{1}}\\
@@ -89,8 +89,8 @@ struct S s = {1,2,3,4};
       \begin{column}{.40\linewidth}
          \begin{tikzpicture}[cell/.style={rectangle,draw=black},
             space/.style={minimum height=1.5em,matrix of nodes,row sep=-\pgflinewidth,column sep=-\pgflinewidth,column 1/.style={font=\ttfamily}},text depth=0.5ex,text height=2ex,nodes in empty cells]
-            
-            \matrix (first)[space, column 1/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=2em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}] 
+
+            \matrix (first)[space, column 1/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=2em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}]
             {
                {s.a}   & {0} & {0} & {0} & {1}\\
                {s.b}   & {2} & |[fill=gray]| &  |[fill=gray]| &  |[fill=gray]| \\
@@ -123,8 +123,8 @@ struct S s = {1,2,3,4};
       \begin{column}{.45\linewidth}
          \begin{tikzpicture}[cell/.style={rectangle,draw=black},
             space/.style={minimum height=1.5em,matrix of nodes,row sep=-\pgflinewidth,column sep=-\pgflinewidth,column 1/.style={font=\ttfamily}},text depth=0.5ex,text height=2ex,nodes in empty cells]
-            
-            \matrix (first)[space, column 1/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=2em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}] 
+
+            \matrix (first)[space, column 1/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=2em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}]
             {
                {s.a}       & {0} & {0} & {0} & {1}\\
                {s.b/s.c}   & {2} & {0} & {0} & {0}\\
@@ -177,8 +177,8 @@ int j = 1023;
       \begin{column}{.4\linewidth}
          \begin{tikzpicture}[align=left, cell/.style={rectangle,draw=black},
             space/.style={minimum height=1.5em,matrix of nodes,row sep=-\pgflinewidth,column sep=-\pgflinewidth,column 1/.style={font=\ttfamily}},text depth=0.5ex,text height=2ex,nodes in empty cells]
-            
-            \matrix (endian)[space, row sep=0.5cm, column 5/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=2em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 1/.style={nodes={cell,minimum width=2em}}] 
+
+            \matrix (endian)[space, row sep=0.5cm, column 5/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=2em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 1/.style={nodes={cell,minimum width=2em}}]
             {
                0 & 0 & 0 & 1 & big\\
                1 & 0 & 0 & 0 & little\\
@@ -218,7 +218,7 @@ ntohs(short int) ntohl(int)
 \item Para hacer uso de esas funciones hay que hacer \lstinline[style=normal]!\#include <arpa/inet.h>!.
 }
 
-\subsection{Segmentos de Memoria} 
+\subsection{Segmentos de Memoria}
 % Stack Heap Data Code
 \begin{frame}[fragile,label=SM]{Segmentos de memoria}
    \begin{itemize}
@@ -270,10 +270,10 @@ void Fc();           // No asigna memoria (es un nombre)
 void foo(int arg) {  // Argumentos y retornos son del stack
    int a = 1;        // Stack segment; scope local (func foo)
    static int b = 1; // Data segment; scope local (func foo)
-   
+
    void * p = malloc(4); // p en el Stack; apunta al Heap
    free(p);              // liberar el bloque explicitamente!!
-   
+
    char *c = "ABC";   // c en el Stack; apunta al Code Segment
    char ar[] = "ABC"; // es un array con su todo en el Stack
 } // fin del scope de foo: las variables locales son liberadas
@@ -356,11 +356,11 @@ p = &g;
 \pause
          \begin{lstlisting}[style=normal]
 #include <stdlib.h>
-void qsort(void *base, 
-           size_t nmemb, 
+void qsort(void *base,
+           size_t nmemb,
            size_t size,
-                   
-            int (*cmp)(const void *, const void *)
+
+           int (*cmp)(const void *, const void *)
           );
 
 int cmp_personas(const void* a, const void* b) {
@@ -380,7 +380,7 @@ int cmp_personas(const void* a, const void* b) {
          \begin{lstlisting}[style=dimmided]
 @/* Ejemplo 1 */
 char *a[10];@@
-      a        // "a" 
+      a        // "a"
      *a        // "a" apunta a
 char *a        // "a" apunta a char
 char *a[10];   // "a" apunta a char (10 de esos)
@@ -412,13 +412,13 @@ char X[10];    // "X" es un array de 10 char
 char (*f)(int)[10];@@
        f            // "f"
       *f            // "f" apunta a
-     (*f) == X      
+     (*f) == X
 @@
 char X(int)[10];@@
 char X(int)         // es la firma de una funcion,
                     // asi que vuelvo un paso para atras
 char (*f)(int)      // entonces esto es un puntero a funcion
-                    // cuya firma recibe un int y retorna 
+                    // cuya firma recibe un int y retorna
                     // un char
 @@
 char (*f)(int)[10]; // puntero a funcion, 10 de esos
@@ -431,12 +431,12 @@ char (*f)(int)[10]; // f es un array de 10 punteros a funcion,
 % typedef
 \begin{frame}[fragile]{Simplificando la notaci\'on}{}
          \begin{lstlisting}[style=normal]
-        char *X[10];   // la variable "X" es un array de 
+        char *X[10];   // la variable "X" es un array de
                        // 10 punteros a char
 
          \end{lstlisting}
          \begin{lstlisting}[style=normal]
-typedef char *X[10];   // el tipo "X" es un array de 
+typedef char *X[10];   // el tipo "X" es un array de
                        // 10 punteros a char
 
 X my_array;            // es una alias, decir "X" es como decir
@@ -447,16 +447,16 @@ char *my_array[10];    // "array de 10 punteros a char"
 \begin{frame}[fragile]{Simplificando la notaci\'on}{}
 Si quiero una variable que sea un array de punteros a funci\'on que no reciban ni retornen nada?
          \begin{lstlisting}[style=normal]
-        void (*X)();   // la variable "X" es un puntero a 
+        void (*X)();   // la variable "X" es un puntero a
                        // funcion
 
          \end{lstlisting}
          \begin{lstlisting}[style=normal]
-typedef void (*X)();   // el tipo "X" es un puntero a 
+typedef void (*X)();   // el tipo "X" es un puntero a
                        // funcion
 
 X f[10];               // f es una array de 10 X, entonces
-                       // f es una array de 10 punteros 
+                       // f es una array de 10 punteros
                        // a funcion
          \end{lstlisting}
 \end{frame}
@@ -472,9 +472,9 @@ int main(int argc, char *argv[]) {
     int cookie = 0;
     char buf[10];
 
-    printf("buf: %08x cookie: %08x\n", &buf, &cookie);
+    printf("buf: %08x cookie: %08x\n", buf, &cookie);
     gets(buf);
-    
+
     if (cookie == 0x41424344) {
         printf("You win!\n");
     }
@@ -511,21 +511,21 @@ strncpy(dst, src, max_dst_size);
 \begin{frame}[fragile]{Challenge: hacer que el programa imprima "You win!"}
          \begin{lstlisting}[style=normal]
 // compilar con el flag -fno-stack-protector
-#include <stdio.h> 
+#include <stdio.h>
 
 int main(int argc, char *argv[]) {
     int cookie = 0;
     char buf[10];
 
-    printf("buf: %08x cookie: %08x\n", &buf, &cookie);
+    printf("buf: %08x cookie: %08x\n", buf, &cookie);
     gets(buf);
-    
+
     if (cookie == 0x41424344) {
         printf("You loose!\n");
     }
 
     return 0;
-} // Insecure Programming 
+} // Insecure Programming
          \end{lstlisting}
 \end{frame}
 
@@ -544,17 +544,17 @@ int main(int argc, char *argv[]) {
       \bibitem{Stroustrup}
          Bjarne Stroustrup.
          \newblock {\em The C++ Programming Language}.
-         \newblock Addison Wesley, Third Edition.
+         \newblock Addison Wesley, Fourth Edition.
 
          \beamertemplatearticlebibitems
-         
+
       \bibitem{man page: gets strcpy htons qsort}
          man page: gets strcpy htons qsort
-      
+
       \bibitem{Insecure Programming}
-         Insecure Programming 
-         
-         % Followed by interesting articles. Keep the list short. 
+         Insecure Programming
+
+         % Followed by interesting articles. Keep the list short.
 
    \end{thebibliography}
 \end{frame}
