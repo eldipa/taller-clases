@@ -75,7 +75,7 @@ int process() {
    if(buf == nullptr) { return -1; }
 
    FILE *f = fopen("data.txt", "rt");
-   if(f == nullptr) { free(buf); return -2; } 
+   if(f == nullptr) { free(buf); return -2; }
 
    int n = fread(buf, sizeof(char), 20, f);
    if(n < 0) { free(buf); fclose(f);  return -3; }
@@ -108,7 +108,7 @@ void process() {
       if(buf == nullptr) { throw -1; }
 
       FILE *f = fopen("data.txt", "rt");
-      if(f == nullptr) { throw -2; } 
+      if(f == nullptr) { throw -2; }
 
       int n = fread(buf, sizeof(char), 20, f);
       if(n < 0) { throw -3; }
@@ -162,8 +162,8 @@ class Buffer{
 \begin{frame}[fragile]{RAII y la vuelta al camino fel\'iz}
    \begin{lstlisting}[style=normal,linebackgroundcolor={%
          \only<1>{\def\lst@linebgrdcmd####1####2####3{}}%
-         \btLstHLB<2>{2-6,11}% 
-         \btLstHLB<3>{2-4,11}% 
+         \btLstHLB<2>{2-6,11}%
+         \btLstHLB<3>{2-4,11}%
    }]
 void process() {
    Buffer buf(20);
@@ -195,7 +195,7 @@ class DoubleBuffer {
    DoubleBuffer(size_t count) : bufA(nullptr), bufB(nullptr) {
       bufA = (char*) malloc(sizeof(char)*count);
       bufB = (char*) malloc(sizeof(char)*count);
-      
+
       if(!bufA || !bufB) throw -1; // Leak!
    }
 
@@ -235,7 +235,7 @@ class Socket {
    public:
       Socket(/*...*/) {
          this->fd = socket(AF_INET, SOCK_STREAM, 0);
-         if (this->fd == -1) 
+         if (this->fd == -1)
             throw OSError("The socket cannot be created.");
       }
 
@@ -328,11 +328,11 @@ El estado final del objeto \lstinline[style=normal]!d! es \dots
    \begin{lstlisting}[style=normal]
 struct Date {
    void set_day(int day) {
-      if (/* invalid */) throw -1;  this._day = day;  
+      if (/* invalid */) throw -1;  this._day = day;
    }
 
    void set_month(int month) {
-      if (/* invalid */) throw -1;  this._month = month; 
+      if (/* invalid */) throw -1;  this._month = month;
    }
 }
 try {
@@ -408,10 +408,10 @@ Pero si la interfaz esta bien dise\~nada, es m\'as f\'acil hacer garant\'ias:
    \begin{lstlisting}[style=normal,linebackgroundcolor={%
          \only<1>{\def\lst@linebgrdcmd####1####2####3{}}%
          \btLstHLB<2>{7}%
-         \btLstHLB<3>{8}% 
+         \btLstHLB<3>{8}%
          \btLstHLB<4>{10}%
          \only<5>{\def\lst@linebgrdcmd####1####2####3{}}%
-         \btLstHLR<6>{9}% 
+         \btLstHLR<6>{9}%
    }]
 template<class T>
 T Stack::pop() {
@@ -461,7 +461,7 @@ Hay posibilidad de leak? Es exception safe weak o strong?
    \begin{lstlisting}[style=normal]
 void parser(/* ... */) {
    /* ... */
-   if (/* error */) 
+   if (/* error */)
       throw ParserError();
    /* ... */
 }
@@ -472,7 +472,7 @@ void parser(/* ... */) {
    \begin{lstlisting}[style=normal, breaklines=true]
 void parser(/* ... */) {
    /* ... */
-   if (/* error */) 
+   if (/* error */)
       throw ParserError("Encontre %s pero esperaba %s en el archivo %s, linea %i", found, expected, filename, line);
    /* ... */
 }
@@ -514,7 +514,7 @@ class OSError : public std::exception {
    \begin{lstlisting}[style=normal,linebackgroundcolor={%
          \btLstHLB<1>{5}%
          \btLstHLB<2>{4,7-10}%
-         \btLstHLB<3>{5,12,13}% 
+         \btLstHLB<3>{5,12,13}%
    }]
 #include <errno.h>
 #include <cstdio>
@@ -633,10 +633,10 @@ try {
 \begin{frame}[fragile]{Basta de prints! Loguear a un archivo con syslog}
    \begin{lstlisting}[style=normal, breaklines=true]
    syslog(LOG_DEBUG, "Mensaje de debug.");
-   
+
    syslog(LOG_INFO, "Un mensaje informativo:"
                     "escuchando en el puerto %i", port);
-   
+
    syslog(LOG_CRIT, "Un error: %s", e.what());
    \end{lstlisting}
 \end{frame}
@@ -703,11 +703,11 @@ int main(int argc, char *argv[]) try {
          \newblock Addison Wesley, Fourth Edition.
 
          \beamertemplatearticlebibitems
-         
+
       \bibitem{man page: syslog}
          man page: syslog
-         
-         % Followed by interesting articles. Keep the list short. 
+
+         % Followed by interesting articles. Keep the list short.
 
    \end{thebibliography}
 \end{frame}
