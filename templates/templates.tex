@@ -87,12 +87,12 @@ class Array_char {
                \btLstHLB<3>{12}% casteo!
          }]
 class Array {
-   void *data;    
+   void *data;
    size_t sizeobj;
 
    public:
    void set(int p, void *v) {
-      memcpy(&data[p*sizeobj], 
+      memcpy(&data[p*sizeobj],
               v,   sizeobj);
    }
 
@@ -137,7 +137,7 @@ class Array_int {
       \begin{column}{.55\linewidth}
          \begin{lstlisting}[style=normal,linebackgroundcolor={%
          \only<1>{\def\lst@linebgrdcmd####1####2####3{}}%
-         \btLstHLB<2>{6}% uso de literal 
+         \btLstHLB<2>{6}% uso de literal
          \btLstHLB<3>{8}% copia
          \btLstHLB<4>{8}% casteo
    }]
@@ -154,7 +154,7 @@ int j = *(int*)my_ints.get(0);
       \begin{column}{.40\linewidth}
          \begin{lstlisting}[style=normalnonumbers,linebackgroundcolor={%
          \only<1>{\def\lst@linebgrdcmd####1####2####3{}}%
-         \btLstHLB<2>{6}% uso de literal 
+         \btLstHLB<2>{6}% uso de literal
          \btLstHLB<3-4>{8}% copia y casteo
    }]
 // Array original
@@ -275,10 +275,10 @@ class Array_int {
    \end{columns}
 \end{frame}
 \note[itemize] {
-\item La idea es similar a la alternativa del precompilador: usar el mismo c\'odigo 
+\item La idea es similar a la alternativa del precompilador: usar el mismo c\'odigo
      pero reemplazando el tipo particular \lstinline[style=normal]!int/char! por uno gen\'erico \lstinline[style=normal]!T!.
 \item Pero a diferencia del precompilador, el c\'odigo template es procesado por
-     el compilador: es m\'as seguro, hay chequeo de tipos y los errores estan 
+     el compilador: es m\'as seguro, hay chequeo de tipos y los errores estan
      mejor explicados (bueno, hasta cierto punto)
 }
 
@@ -344,7 +344,7 @@ void swap(T &a, T &b) {
          \end{lstlisting}
          \begin{itemize}
             \only<1> {
-            \item Containers y algoritmos 
+            \item Containers y algoritmos
                 }
             \only<2> {
             \item M\'ultiples par\'ametros
@@ -362,7 +362,7 @@ void swap(T &a, T &b) {
 \note[itemize] {
 \item No solo las clases pueden ser templates, los \lstinline[style=normal]!struct! y las funciones tambi\'en.
 \item Se puede parametrizar por tipo (\lstinline[style=normal]!class T!) o por una constante (\lstinline[style=normal]!int size!).
-\item Como todo par\'ametro, pueden tener un default. 
+\item Como todo par\'ametro, pueden tener un default.
 }
 
 
@@ -392,7 +392,7 @@ foo<char>(3); // T = char (explicit)
          \btLstHLB<3>{4-5,9,16}% template especializado
          %\btLstHLB<3>{9,16}% misma interfaz
    }]
-template<class T>          // Template 
+template<class T>          // Template
 class Array { /*...*/ };   // anterior
 
 template<>
@@ -572,8 +572,8 @@ class Array<T*> : private Array<void*> {
 \note[itemize] {
 \item El problema de la implementaci\'on original que usaba \lstinline[style=normal]!void*!
      eran los peligrosos casteos y la p\'erdida de chequeos de tipos.
-\item   Una especializaci\'on parcial nos permite encapsular los casteos en 
-     un template, liberando al usuario de ellos mientras que la mayoria 
+\item   Una especializaci\'on parcial nos permite encapsular los casteos en
+     un template, liberando al usuario de ellos mientras que la mayoria
      de la implementaci\'on del container esta contenida en el \lstinline[style=normal]!Array<void*>!
 }
 
@@ -586,7 +586,7 @@ Array<A>  d;
 Array<B>  e;
 Array<A>  f;
    \end{lstlisting}
-Y ahora, cu\'antas clases \lstinline[style=normal]!Array!s se construyeron? 
+Y ahora, cu\'antas clases \lstinline[style=normal]!Array!s se construyeron?
    \uncover<2->{\alert{6!}}
    \begin{itemize}
       \item<2-> 2 clases usando \lstinline[style=normal]!Array<T>! con \lstinline[style=normal]!T = A! y \lstinline[style=normal]!T = B!
@@ -611,446 +611,6 @@ Y ahora, cu\'antas clases \lstinline[style=normal]!Array!s se construyeron?
       \item \alert{Jam\'as} implementar un template \uncover<2->{al primer intento. Crear una clase prototipo (\lstinline[style=normal]!Array_ints!, \alert{testearla} y luego pasarla a template \lstinline[style=normal]!Array<T>!}
       \item<3-> Si se va a usar el templates con punteros, evitar el code bloat implementando la especializaci\'on \lstinline[style=normal]!void*! (\lstinline[style=normal]!Array<void*>!) y luego la especializaci\'on parcial \lstinline[style=normal]!T*! (\lstinline[style=normal]!Array<T*>!).
       \item<4-> Opcionalmente, implementar especializaciones optimizadas (\lstinline[style=normal]!Array<bool>!)
-   \end{itemize}
-\end{frame}
-
-\section{Standard Template Library}
-\subsection{Containers}
-\begin{frame}[fragile]{Containers - Programar en C++ y no en C con objetos}
-C es muy eficiente, pero tareas simples pueden resultar tit\'anicas.
-   \pause
-   \begin{itemize}
-      \item Manejo de texto.
-      \item Armar un vector que aumente de tama\~no.
-      \item Frecuencia de elementos.
-      \item Remover duplicados.
-   \end{itemize}
-   \pause
-\vphantom{X}
-C++ ofrece containers muy vers\'atiles y eficientes. En C++, hay que programar en C++ y \alert{no en C}!
-\end{frame}
-
-
-\begin{frame}[fragile]{Manejo de textos con std::string}
-\'Util para el manejo de textos pero no para el manejo de blobs binarios.
-   \begin{lstlisting}[style=normal]
-std::string saludos = "Hola mundo!";
-
-//Substring "ola"
-std::string otro_string = saludos.substr(1, 3);
-
-// Comparacion de strings
-bool son_iguales = (saludos == otro_string);
-
-// Concatenacion
-otro_string = "H" + otro_string + " mundo!";
-   \end{lstlisting}
-\end{frame}
-\note[itemize] {
-\item \lstinline[style=normal]!std::string! es un container flexible y poderoso pensado en el procesamiento de texto.
-\item Una alternativa es \lstinline[style=normal]!std::vector<char>!. Ambos containers tienen sus pro y contras. Ver que m\'etodos soportan cada uno y tomar la decisi\'on en funci\'on de ello.
-}
-
-
-\begin{frame}[fragile]{Adios los new[] con std::vector}
-Por ser RAII, es una alternativa al \lstinline[style=normal]!new[]! (excepto para \lstinline[style=normal]!Vector<bool>!) \\
-\lstinline[style=normal]!std::vector<char>! es una muy buena elecci\'on para manejar blobs binarios pero no para manejo de textos.
-      \begin{lstlisting}[style=normal]
-std::vector<char> data(256, 0);
-
-char *buf = data.data();
-file.read(buf, 256);
-      \end{lstlisting}
-\end{frame}
-\note[itemize] {
-\item El m\'etodo \lstinline[style=normal]!vector::data! nos da acceso al almacenamiento interno del vector y nos permite interactuar con la api de C que espera un buffer de tipo \lstinline[style=normal]!char*!.
-\item Por qu\'e excepto para \lstinline[style=normal]!Vector<bool>!? por que esa clase es una especializaci\'on total como la que vimos aqu\'i.
-}
-
-
-\begin{frame}[fragile]{C\'alculo de frecuencias con std::map (Arrays asociativos)}
-   \begin{lstlisting}[style=normal]
-std::map<char, int> freq_de_caracteres;
-
-std::string texto = "Lorem ipsum dolor sit amet, " /*...*/
-
-for (int i = 0; i < texto.length(); ++i) {
-   char c = texto[i];
-   if (freq_de_caracteres.count(c)) {
-      freq_de_caracteres[c] += 1;
-   }
-   else {
-      freq_de_caracteres[c] = 1;
-   }
-}
-
-// vease tambien su version hash
-std::unordered_map<K, V>
-   \end{lstlisting}
-\end{frame}
-
-
-\begin{frame}[fragile]{Remover duplicados con std::set}
-   \begin{lstlisting}[style=normal]
-void remover_duplicados(std::list<int> &lista) {
-   std::set<int> unicos(lista.begin(), lista.end());
-   std::list<int> filtrado(unicos.begin(), unicos.end());
-
-   lista.swap(filtrado);
-}
-
-// vease tambien la version hash de set
-std::unordered_set<K, V>
-   \end{lstlisting}
-\end{frame}
-\note[itemize] {
-\item Muchos containers pueden construirse a partir de otros a traves de dos iteradores que marcan desde donde y hasta donde se deben copiar los elementos.
-\item Dado que \lstinline[style=normal]!std::set! ignora los duplicados esto es una forma interesante de resolver el problema.
-\item Nota: como side effect, \lstinline[style=normal]!std::set! nos dejara ordenados los elementos que no fueron removidos.
-\item Para finalizar se podr\'ia haber hecho \lstinline[style=normal]!lista = filtrado!; pero eso generar\'ia otra copia mas. El m\'etodo \lstinline[style=normal]!swap! cambia los containers internos y resulta mas eficiente que una copia.
-}
-
-
-\begin{frame}[fragile]{Y los cl\'asicos de hoy y de siempre}
-   \begin{lstlisting}[style=normal]
-std::list<int> lista;   // doubled "linked" list
-
-lista.push_back(1);     lista.push_front(2);
-lista.insert(...);      lista.erase(...);
-
-std::stack<int> pila;
-
-pila.push(1);
-pila.pop();     // no devuelve nada!
-
-std::queue<int> cola;
-
-cola.push(1);
-cola.pop();     // pull (no devuelve nada!)
-
-// Para obtener el valor de un stack/queue
-int i = pila.top(); int j = cola.front();
-
-   \end{lstlisting}
-\end{frame}
-\note[itemize] {
-\item Los cl\'asicos, lista, colas, pilas (incluso hay colas prioritarias)
-\item \lstinline[style=normal]!back()!, \lstinline[style=normal]!front()! y \lstinline[style=normal]!top()! retornan una referencia del primer y \'ultimo elemento mientras
-    que \lstinline[style=normal]!pop()! y \lstinline[style=normal]!push()! los remueven pero sin devolverlos. El por qu\'e de esta interfaz que separa el retorno de la remoci\'on es debido a las garant\'ias Exception Safety (que las veremos en la clase de Excepciones y Manejo de Errores en C++).
-}
-
-
-\begin{frame}[fragile]{Custom: Containers, adapters y allocators}
-   \begin{lstlisting}[style=normal]
-std::stack<int> pila;
-
-std::stack<int, std::vector<int>> pila;
-
-std::stack<int, std::vector<int, MyAlloc<int>>> pila;
-   \end{lstlisting}
-   \begin{itemize}
-      \item Algunos containers son en realidad adapters y podemos cambiar el container real que usan detras de escena.
-      \item M\'as aun, podemos cambiar en donde allocan los objetos los containers: no usan \lstinline[style=normal]!new! directamente sino que usan un alocador, un objeto que podemos cambiar.
-      \item Como la customizaci\'on se hace a traves de un par\'ametro template esta se hace en tiempo de compilaci\'on y no conlleva ningun overhead en runtime.
-   \end{itemize}
-\end{frame}
-\note[itemize] {
-\item Algunos containers son en realidad adapters. Esto significa que podemos cambiar
-     el objeto interno que implementa realmente el container.
-\item Aun mas, los containers usan un objeto "allocator"  por default para acceder a la memoria
-     (no hacen \lstinline[style=normal]!new! sino que llaman a un m\'etodo allocate). Este objeto 
-     allocator se puede cambiar tambien! Se podria implementar un stack que en
-     vez de usar la memoria use un archivo o una shared memory.
-}
-
-
-\begin{frame}[fragile]{STL- Resumen}
-   \begin{itemize}
-      \item Esto no es C. Hay una lib est\'andar m\'as completa. \alert{Usarla}. \\
-      Un buen sitio para buscar info es http://www.cplusplus.com/reference/
-      \item Los containers pueden ser muy eficientes si los eligen correctamente.
-   \end{itemize}
-\end{frame}
-
-
-\subsection{Iteradores}
-\begin{frame}[fragile]{Iteradores - Abstracci\'on del container}
-Muchos algoritmos son independientes del container sobre el que trabajan; s\'olo 
-necesitan una forma de recorrerlos.
-   \pause
-   \begin{itemize}
-      \item Sumatoria de n\'umeros de un container.
-      \item Imprimir sus elementos.
-      \item B\'usqueda secuencial.
-   \end{itemize}
-   \pause
-\vphantom{X}
-Los iteradores abstraen la forma de recorrer un container.\\
-En C++, hay distintas clases de iteradores pero cada container s\'olo implementa aquellos que pueda hacerlos \alert{eficientemente}.
-\end{frame}
-\begin{frame}[fragile]{Iteradores}
-         \begin{lstlisting}[style=normal,xleftmargin=.3\textwidth,xrightmargin=.2\textwidth]
-// Todos pueden
-++it;       it++;
-it = itx;   Iter it(itx);
-         \end{lstlisting}
-\pause
-   \begin{columns}[t]
-      \begin{column}{.4\linewidth}
-         \begin{lstlisting}[style=normal,firstnumber=4]
-// Input (mutables)
-*it = t;    *it++ = t;
-//
-         \end{lstlisting}
-      \end{column}
-      \begin{column}{.4\linewidth}
-\pause
-         \begin{lstlisting}[style=normal,firstnumber=4]
-// Output (inmutables)
-t = *it;    it->m;
-it == itx;  it != itx;
-         \end{lstlisting}
-      \end{column}
-   \end{columns}
-\pause
-         \begin{lstlisting}[style=normal,xleftmargin=.3\textwidth,xrightmargin=.2\textwidth,firstnumber=last]
-// Bidirectional
---it;       it--;
-         \end{lstlisting}
-\pause
-         \begin{lstlisting}[style=normal,xleftmargin=.2\textwidth,xrightmargin=.2\textwidth,firstnumber=last]
-// RandomAccess (aka pointers)
-it + n;     it - n;     it[n];
-it += n;    it + itx;   it < n;
-         \end{lstlisting}
-\end{frame}
-\note[itemize] {
-\item Todos los iteradores pueden moverse hacia adelante (forward) y copiarse.
-\item Algunos soportan el dereferenciado para la asignaci\'on (input) mientras que otros lo soportan para la lectura del objeto apuntado (output). Estos \'ultimos permiten realizar comparaciones por igualdad.
-\item Otros soportan moverse hacia atras (backward)
-\item Y finalmente existen algunos iteradores que permiten moverse de forma no secuencial como si fueran punteros.
-}
-
-\begin{frame}[fragile]{Iteradores}
-\begin{center}
-         \begin{tikzpicture}[every tree node/.style=draw,grow=up]
-            \tikzset{level distance=35pt}
-            \Tree [.{RandomAccess}
-                     [.{Bidirectional}
-                        [.{Forward}
-                           [.{Output(escritura)} ]
-                           [.{Input(lectura)} ]
-                        ]
-                     ]
-                  ]
-            \end{tikzpicture}
-\end{center}
-\end{frame}
-\note[itemize] {
-\item Existe una jerarqu\'ia de iteradores. Todos los iteradores con RandomAccess son iteradores Bidirectionales pero no todos los Bidirectionales tienen RandomAccess
-}
-
-
-\begin{frame}[fragile]{Lifetime de los iteradores}{Los iteradores son v\'alidos mientras no se modifique el container}
-Mal, si el container es modificado los iteradores son inv\'alidos:
-   \begin{lstlisting}[style=normal]
-std::list<int>::iterator it = lista.begin();
-for (; it != lista.end(); ++it)
-   if (*it % 2 == 0)  // remover si es par
-      lista.erase(it); // el container fue modificado!!
-   \end{lstlisting}
-\pause
-Bien:
-   \begin{lstlisting}[style=normal]
-std::list<int> tmp;
-std::list<int>::iterator it = lista.begin();
-for (; it != lista.end(); ++it) 
-   if (*it % 2 != 0) // copiar si no es par
-      tmp.push_back(*it);
-lista.swap(tmp);
-   \end{lstlisting}
-\pause
-Mucho mejor!:
-   \begin{lstlisting}[style=normal]
-bool es_par(const int &i) { return i % 2 == 0; }
-std::remove_if(lista.begin(), lista.end(), es_par);
-   \end{lstlisting}
-\end{frame}
-\note[itemize] {
-\item En general un iterador es v\'alido mientras que su container no cambie: iterar un container para removerle algunos elementos suele ser un bug cl\'asico.
-}
-
-\subsection{Algoritmos}
-\begin{frame}[fragile]{Algortimos gen\'ericos - Abstracci\'on de c\'odigo}
-      \begin{lstlisting}[style=normal]
-// no compila por un mini detalle (typename)
-template <class Container, class Val>
-Container::iterator find(
-                        Container &v, 
-                        const Val &val) {
-  Container::iterator it = v.begin();
-  Container::iterator end = v.end();
-
-  while (it != end and val != *it) {
-      ++it;
-  }
-
-  return it;
-}
-      \end{lstlisting}
-\end{frame}
-\begin{frame}[fragile]{Intermezzo: typenames}{Para diferenciar entre un m\'etodo y un subtipo de clase}
-      \begin{lstlisting}[style=normal]
-struct List {
-    struct iterator {
-        /* ... */
-    };
-
-    List::iterator begin() {
-        return List::iterator(/*...*/);
-    }
-};
-      \end{lstlisting}
-      \begin{itemize} 
-          \item \lstinline[style=normal]!List::iterator! hace referencia a un tipo (el \lstinline[style=normal]!struct iterator! dentro de \lstinline[style=normal]!List!)
-          \item \lstinline[style=normal]!List::begin! hace referencia a un m\'etodo de \lstinline[style=normal]!List!
-      \end{itemize}
-\end{frame}
-
-
-\begin{frame}[fragile]{Intermezzo: typenames}{Para diferenciar entre un m\'etodo y un subtipo de clase}
-C\'omo sabe el compilador que \lstinline[style=normal]!Container::iterator! es un tipo y no un m\'etodo si ni siquiera sabe que es \lstinline[style=normal]!Container!?
-      \begin{lstlisting}[style=normal]
-template <class Container, class Val>
-Container::iterator find(...) { ... }
-      \end{lstlisting}
-\pause
-La keyword \lstinline[style=normal]!typename! permite diferenciar un m\'etodo de un tipo.
-      \begin{lstlisting}[style=normal]
-template <class Container, class Val>
-typename Container::iterator find(...) { ... }
-      \end{lstlisting}
-\end{frame}
-
-
-\begin{frame}[fragile]{Algortimos gen\'ericos - Abstracci\'on de c\'odigo}
-      \begin{lstlisting}[style=normal]
-// ahora si compila (siempre que Container y Val cumplan)
-template <class Container, class Val>
-typename Container::iterator find(
-                                Container &v, 
-                                const Val &val) {
-  typename Container::iterator it = v.begin();
-  typename Container::iterator end = v.end();
-
-  while (it != end and val != *it) {
-      ++it;
-  }
-
-  return it;
-}
-      \end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{Algoritmos con iteradores, no con containers}
-      \begin{lstlisting}[style=normal]
-template <class Iterator, class Val>
-Iterator find(Iterator &it, Iterator &end, const Val &val) {
-    while (it != end and val != *it) {
-        ++it;
-    }
-
-    return it;
-}
-      \end{lstlisting}
-\end{frame}
-\note[itemize] {
-\item La mayor\'ia de los algoritmos deber\'ian escribirse en t\'erminos de iteradores: recibir y retornar iteradores, independizandose del container en cuesti\'on.
-}
-
-
-\begin{frame}[fragile]{Algortimos de la STL: menos c\'odigo, menos bugs!}
-For each, (tambi\'en conocido como map)
-      \begin{lstlisting}[style=normal]
-std::for_each(container.begin(), container.end(), func);
-      \end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{Algortimos de la STL: menos c\'odigo, menos bugs!}
-Como imprimir al \lstinline[style=normal]!stdout! un container (\'util para debug)
-      \begin{lstlisting}[style=normal]
-template<class T>
-void print_to_cout(const T &val) {
-    std::cout << val << " ";
-}
-
-std::list<int> l;
-for_each(l.begin(), l.end(), print_to_cout<int>);
-      \end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{Algortimos de la STL: menos c\'odigo, menos bugs!}
-O con functors:
-      \begin{lstlisting}[style=normal]
-template<class T>
-struct Printer {
-    std::ostream &out;
-
-    Printer(std::ostream &out) : out(out) {}
-
-    void operator()(const T &val) {
-        out << val << " ";
-    }
-};
-
-std::list<int> l;
-for_each(l.begin(), l.end(), Printer<int>(std::cout));
-      \end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{Algortimos de la STL: menos c\'odigo, menos bugs!}
-Sorting
-      \begin{lstlisting}[style=normal]
-// usando el operador less < como ordenador
-std::sort(container.begin(), container.end());
-
-// usando la funcion/functor especifica
-std::sort(container.begin(), container.end(), less_func); 
-
-// orden estable
-std::stable_sort(container.begin(), container.end());
-      \end{lstlisting}
-\vphantom{X}
-Searching (sobre containers ordenados)
-      \begin{lstlisting}[style=normal]
-// usando la misma funcion/functor que se uso para el
-// ordenamiento (el operador less < es el default)
-std::binary_seach(container.begin(), container.end(), 
-                  val_to_be_found); 
-      \end{lstlisting}
-\end{frame}
-
-
-
-\begin{frame}[fragile]{Algortimos de la STL: c\'odigo con optimizaciones}
-Swap, con implementaciones especializadas para containers
-      \begin{lstlisting}[style=normal]
-int a = 1, b = 2;
-std::swap(a, b);     // a == 2, b == 1 haciendo copias
-
-std::list<int> a;
-std::list<int> b;
-std::swap(a, b);     // solo swap de punteros internos!
-      \end{lstlisting}
-\end{frame}
-
-
-
-\begin{frame}[fragile]{STL - Resumen}
-   \begin{itemize}
-      \item El uso de templates, containers e iteradores puede dejar el c\'odigo muy verbose, usar \lstinline[style=normal]!typedef! y \lstinline[style=normal]!using!
-      \item Usar el operador de preincremento \lstinline[style=normal]!++it! y no el de pos incremento para evitar copias.
-      \item Busquen! \lstinline[style=normal]!std::stack!, \lstinline[style=normal]!std::queue!, \lstinline[style=normal]!std::make_heap!, \lstinline[style=normal]!std::set_intersection!, \lstinline[style=normal]!std::set_union!, etc. Hay m\'as contenedores y algoritmos listos para ser usados. \alert{Encuentrenlos y usenlos!}
    \end{itemize}
 \end{frame}
 
@@ -1080,7 +640,7 @@ std::swap(a, b);     // solo swap de punteros internos!
          \newblock Addison Wesley, Fourth Edition.
 
          %\beamertemplatearticlebibitems
-         % Followed by interesting articles. Keep the list short. 
+         % Followed by interesting articles. Keep the list short.
 
    \end{thebibliography}
 \end{frame}
