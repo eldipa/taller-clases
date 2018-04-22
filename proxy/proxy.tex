@@ -1,0 +1,106 @@
+\input{../preamble.tex}
+
+\title%
+{Aplicaciones Cliente - Servidor (draft)}
+
+\subject{Aplicaciones Cliente - Servidor (draft)}
+
+\begin{document}
+
+% Keys to support piece-wise uncovering of elements in TikZ pictures:
+% \node[visible on=<2->](foo){Foo}
+% \node[visible on=<{2,4}>](bar){Bar}   % put braces around comma expressions
+%
+% Internally works by setting opacity=0 when invisible, which has the
+% adavantage (compared to \node<2->(foo){Foo} that the node is always there, hence
+% always consumes space that (foo) is always available.
+%
+% The actual command that implements the invisibility can be overriden
+% by altering the style invisible. For instance \tikzsset{invisible/.style={opacity=0.2}}
+% would dim the "invisible" parts. Alternatively, the color might be set to white, if the
+% output driver does not support transparencies (e.g., PS)
+%
+\tikzset{
+ nodeinvisible/.style={opacity=.4,fill=gray},
+ nodevisible on/.style={alt={#1{}{nodeinvisible}}},
+ arrowinvisible/.style={opacity=.4},
+ arrowvisible on/.style={alt={#1{}{arrowinvisible}}},
+ alt/.code args={<#1>#2#3}{%
+   \alt<#1>{\pgfkeysalso{#2}}{\pgfkeysalso{#3}} % \pgfkeysalso doesn't change the path
+ },
+}
+
+\begin{frame}
+   \titlepage
+\end{frame}
+
+\begin{frame}[fragile,label=M8]{Mantra}{}
+   \begin{itemize}
+      \item Detectar que acciones son bloqueantes o potencialmente lentas: \\
+            accept, send, recv, join, fwrite, fread
+      \item Por cada acci\'on bloqueante o potencialmente lenta preguntarse, \\
+          si el hilo se bloqueara o tardara mucho, que podr\'ia hacer en simultaneo? 
+       \begin{itemize}
+           \item hacer un request (send) a http://fi.uba.ar y esperar (recv) a recibir la pagina web para renderizarla.
+           \item mientras se hace se procesa un request, el usuario interact\'ua con la interfaz gr\'afica.
+       \end{itemize}
+   \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Ejemplo: Sala de Chat}{}
+   Aplicaci\'on por consola con multiples clientes conectandose a una sala de chat.
+   \begin{itemize}
+      \item Draft inicial? Cu\'ales son los features a implementar?
+          \pause
+      \item Puedo recibir mensajes sin yo tener que enviar? Ejemplo de un send independiente de un recv.
+          \pause
+      \item Objetos compartidos en el cliente? y en el servidor?
+          \pause
+      \item Thread Safe Queue como alternativa para la comunicaci\'on entre hilos.
+       \begin{itemize}
+           \item hacer un request (send) a http://fi.uba.ar y esperar (recv) a recibir la pagina web para renderizarla.
+           \item mientras se hace se procesa un request, el usuario interact\'ua con la interfaz gr\'afica.
+       \end{itemize}
+   \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Proxies}
+   \begin{columns}[t]
+      \begin{column}{.4\linewidth}
+         \begin{lstlisting}[style=normal,firstnumber=1]
+ChatSystem cs (/*...*/);
+
+Room r = cs.join("#taller");
+r.write("hi everyone!");
+
+r.leave();
+         \end{lstlisting}
+      \end{column}
+\pause
+      \begin{column}{.4\linewidth}
+         \begin{lstlisting}[style=normal,firstnumber=1]
+struct ChatSystem {
+    Room open(roomname) {
+        skt.send("JOIN");
+        skt.send(roomname);
+
+        id = skt.recv(1);
+        return Room(id);
+    }
+
+struct Room {
+    write(txt) {
+        skt.send("WRITE");
+        skt.send(id);
+        skt.send(txt.sz());
+        skt.send(txt.str());
+    }
+         \end{lstlisting}
+      \end{column}
+   \end{columns}
+\end{frame}
+
+
+\end{document}
+
+

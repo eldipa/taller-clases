@@ -1,0 +1,424 @@
+\input{../preamble.tex}
+
+\title%
+{Servidores multi-cliente (draft)}
+
+\subject{Servidores multi-cliente (draft)}
+
+\begin{document}
+
+% Keys to support piece-wise uncovering of elements in TikZ pictures:
+% \node[visible on=<2->](foo){Foo}
+% \node[visible on=<{2,4}>](bar){Bar}   % put braces around comma expressions
+%
+% Internally works by setting opacity=0 when invisible, which has the
+% adavantage (compared to \node<2->(foo){Foo} that the node is always there, hence
+% always consumes space that (foo) is always available.
+%
+% The actual command that implements the invisibility can be overriden
+% by altering the style invisible. For instance \tikzsset{invisible/.style={opacity=0.2}}
+% would dim the "invisible" parts. Alternatively, the color might be set to white, if the
+% output driver does not support transparencies (e.g., PS)
+%
+\tikzset{
+ nodeinvisible/.style={opacity=.4,fill=gray},
+ nodevisible on/.style={alt={#1{}{nodeinvisible}}},
+ arrowinvisible/.style={opacity=.4},
+ arrowvisible on/.style={alt={#1{}{arrowinvisible}}},
+ alt/.code args={<#1>#2#3}{%
+   \alt<#1>{\pgfkeysalso{#2}}{\pgfkeysalso{#3}} % \pgfkeysalso doesn't change the path
+ },
+}
+
+\begin{frame}
+   \titlepage
+\end{frame}
+
+
+\section{Servidores multi-cliente (draft)}
+\subsection{}
+\begin{frame}[fragile,label=M1]{Simple: servidor para un solo cliente a la vez}{}
+
+% -------------------------------------------------
+% Start the picture
+\begin{tikzpicture}[%
+    >=latex,              % Nice arrows; your taste may be different
+    start chain=going below,    % General flow is top-to-bottom
+    node distance=4mm and 60mm, % Global setup of box spacing
+    every join/.style={norm},   % Default linetype for connecting boxes
+    ]\footnotesize
+% -------------------------------------------------
+% A few box styles
+% <on chain> *and* <on grid> reduce the need for manual relative
+% positioning of nodes
+\tikzset{
+% Parece que esto funciona como un sistema de herencia (proc hereda de base; test hereda
+% de base tambien; term hereda de proc...)
+% Todo esto son definiciones de estilos
+  base/.style={draw, on chain, on grid, align=left, minimum height=4ex},
+  proc/.style={base, rounded corners},
+  % coord node style is used for placing corners of connecting lines
+  coord/.style={coordinate, on chain, on grid, node distance=6mm and 25mm},
+  namethread/.style={base, align=center, draw=none, node distance=6mm and 25mm},
+  % -------------------------------------------------
+  % Connector line styles for different parts of the diagram
+  norm/.style={->, draw, black, line width=0.03cm},
+  ret/.style={->, draw, black, line width=0.03cm},
+  snakearrow/.style={-, decorate, line width=0.03cm, decoration={snake,amplitude=.6mm,segment length=2mm,post length=1mm}}
+}
+% -------------------------------------------------
+% Start by placing the nodes
+% Al parecer se pone todos los styles entre [], un nombre o id entre () y el
+% texto entre {}
+\node [proc, nodevisible on={<1,2>}] (sktaccept) {
+   \lstinline[style=normal]!peer = skt.accept()!
+};
+
+\node [proc, nodevisible on={<1,2>}] (peerreadwrite) {
+   \lstinline[style=normal]!peer.send/recv!
+};
+\node [proc, nodevisible on={<1,2>}] (peershutclose) {
+   \lstinline[style=normal]!peer.shutdown(RDWR)!\\
+   \lstinline[style=normal]!peer.close()!
+};
+
+\node [proc, nodevisible on={<1,3>}] (sktclose) {
+   \lstinline[style=normal]!skt.close()!
+};
+
+% Now we place the coordinate nodes for the connectors with angles, or
+% with annotations. We also mark them for debugging.
+\node [coord, left=of peershutclose] (c1)  {};
+
+\node [namethread, above=4em of sktaccept] (c0)  {(main)};
+\node [coord, below=3em of sktclose] (c3)  {};
+
+
+\draw [->, norm, arrowvisible on={<1,2>}] (sktaccept) -- (peerreadwrite);
+\draw [->, norm, arrowvisible on={<1,2>}] (peerreadwrite) -- (peershutclose);
+
+\draw [->, ret, arrowvisible on={<1,2>}] (peershutclose.west) to[out=180,in=180] (sktaccept.west);
+\draw [->, ret, arrowvisible on={<1,3>}] (sktaccept.east) to[out=0,in=0] (sktclose);
+
+\draw [snakearrow] (c0) -- (sktaccept);
+\draw [snakearrow, arrowvisible on={<1,3>}] (sktclose) -- (c3);
+
+\end{tikzpicture}
+
+% =================================================
+
+\end{frame}
+\note[itemize] {
+\item El programa es un bucle simple, se espera una conexi\'on remota, se la procesa y se repite el proceso
+\item Solo cuando \lstinline[style=normal]!accept! falla por recibir una se\~nal, el bucle finaliza.
+\item Este esquema solo soporta un cliente a la vez y no permite hacer cosas en paralelo mientras se espera a un nuevo cliente ni mientras se habla con uno ya conectado.
+\item Es muy simple. Usado en servidores RPC y servidores Web simples (o dummies).
+}
+
+\begin{frame}[fragile,label=M2]{Servidor multi-cliente (draft)}{}
+
+% -------------------------------------------------
+% Start the picture
+\begin{tikzpicture}[%
+    >=latex,              % Nice arrows; your taste may be different
+    start chain=going below,    % General flow is top-to-bottom
+    node distance=4mm and 50mm, % Global setup of box spacing
+    every join/.style={norm},   % Default linetype for connecting boxes
+    ]\footnotesize
+
+\tikzset{
+  base/.style={draw, on chain, on grid, align=left, minimum height=4ex},
+  proc/.style={base, rounded corners},
+  % coord node style is used for placing corners of connecting lines
+  coord/.style={coordinate, on chain, on grid, node distance=6mm and 25mm},
+  namethread/.style={base, align=center, draw=none, node distance=6mm and 25mm},
+  % -------------------------------------------------
+  % Connector line styles for different parts of the diagram
+  norm/.style={->, draw, black, line width=0.03cm},
+  ret/.style={->, draw, black, line width=0.03cm},
+  snakearrow/.style={-, decorate, line width=0.03cm, decoration={snake,amplitude=.6mm,segment length=2mm,post length=1mm}},
+  threadarrow/.style={->, dashed, draw, black, line width=0.03cm},
+}
+
+
+% Hilo main
+\node [proc, nodevisible on={<1,2,3>}] (sktaccept) {
+   \lstinline[style=normal]!peer = skt.accept()!\\
+    \lstinline[style=normal]!clients.add(!\\
+     \lstinline[style=normal]!    ThClient(peer))!
+};
+
+\node [proc, nodevisible on={<1,2,3>}] (reap) {
+   \lstinline[style=normal]!for (cli in clients)!\\
+    \lstinline[style=normal]!   if cli.is_dead()!\\
+   \lstinline[style=normal]!      cli.join()!\\
+   \lstinline[style=normal]!      free/delete cli!
+};
+
+\node [proc, nodevisible on={<1,4>}] (stopreap) {
+    \lstinline[style=normal]!for (cli in clients)!\\
+   \lstinline[style=normal]!   cli.stop()!\\
+   \lstinline[style=normal]!   cli.join()!\\
+   \lstinline[style=normal]!   free/delete cli!
+};
+
+
+\node [proc, nodevisible on={<1,4>}] (sktclose) {
+   \lstinline[style=normal]!skt.close()!
+};
+% hilo cliente
+\node [proc, right=4cm of reap, nodevisible on={<1,2>}] (peerreadwrite) {
+   \lstinline[style=normal]!peer.send/recv!
+};
+
+
+\node [namethread, above=4em of sktaccept] (abovesktaccept)  {(main)};
+\node [namethread, above=4em of peerreadwrite] (abovepeerreadwrite)  {(cliente i)};
+
+\node [coord, below=3em of sktclose] (belowsktclose)  {};
+\node [coord, below=3em of peerreadwrite] (belowpeerreadwrite)  {};
+
+\draw [->, norm,arrowvisible on={<1,2,3>}] (sktaccept) -- (reap);
+\draw [->, norm,arrowvisible on={<1,4>}] (stopreap) -- (sktclose);
+
+\draw [->, ret,arrowvisible on={<1,2,3>}] (reap.west) to[out=115,in=155,distance=6em] (sktaccept.north);
+\draw [->, ret,arrowvisible on={<1,2>}] (peerreadwrite.west) to[out=160,in=115,distance=2.3em] (peerreadwrite.north);
+
+\draw [->, ret,arrowvisible on={<1,4>}] (sktaccept.east) to[out=280,in=5,distance=8em] (stopreap.north);
+
+\path (sktaccept.east) to node [near start, yshift=0.8em, xshift=4em] {\lstinline[style=normal]!!} (sktaccept);
+  \draw [->,threadarrow,arrowvisible on={<1,2>}] (sktaccept.east) -- (abovepeerreadwrite.south);
+
+\draw [->,threadarrow,arrowvisible on={<1,3>}] (belowpeerreadwrite.south) -- (reap.east);
+\draw [->,threadarrow,arrowvisible on={<1,4>}] (belowpeerreadwrite.south) -- (stopreap.east);
+
+\draw [snakearrow] (abovesktaccept) -- (sktaccept);
+\draw [snakearrow,arrowvisible on={<1,2>}] (abovepeerreadwrite) -- (peerreadwrite);
+
+\draw [snakearrow, arrowvisible on={<1,4>}] (sktclose) -- (belowsktclose);
+\draw [snakearrow, arrowvisible on={<1,3,4>}] (peerreadwrite) -- (belowpeerreadwrite);
+
+\end{tikzpicture}
+
+% =================================================
+
+\end{frame}
+
+\begin{frame}[fragile,label=M4]{Frenar un hilo}{}
+   \begin{columns}
+      \begin{column}{.55\linewidth}
+         \begin{lstlisting}[style=normal]
+class ThClient:public Thread {
+   bool keep_talking;
+   Socket peer;
+
+   public:
+   virtual void run() {
+      while (keep_talking) {
+         ...
+         peer.send(...);
+         ...
+         peer.recv(...);
+         ...
+      }
+   }
+
+   void stop();
+};
+         \end{lstlisting}
+      \end{column}
+      \begin{column}{.45\linewidth}
+         \begin{lstlisting}[style=normal]
+// Violento pero efectivo
+void ThClient::stop() {
+   keep_talking = false;
+   peer.shutdown();
+   peer.close();
+};
+         \end{lstlisting}
+
+         \begin{lstlisting}[style=normal]
+// Polite pero peligroso
+void ThClient::stop() {
+   keep_talking = false;
+};
+         \end{lstlisting}
+      \end{column}
+   \end{columns}
+\end{frame}
+\note[itemize] {
+\item Como frenar un hilo? La librer\'ia \lstinline[style=normal]!pthread! ofrece una manera gen\'erica de frenar o matar a un hilo (stop/kill) pero deja \alert{los recursos sin finalizar}. \alert{No usar}.
+\item Frenar un hilo correctamente depender\'a de la naturaleza del hilo (depende de la aplicaci\'on en cuesti\'on, no hay una soluci\'on general).
+\item Hay dos variantes posibles: forzar un cierre o decirle al hilo que cuando pueda \'el mismo finalize.
+\item Si el hilo esta bloqueado en una operaci\'ion de sockets, se puede hacer un \lstinline[style=normal]!shutdown/close! del socket para forzar un cierre. Obviamente si el hilo estaba en el medio de una comunicaci\'on, el trabajo puedo quedar trunco o corrupto.
+\item Usar un \lstinline[style=normal]!bool! para decirle al hilo que finalize. El hilo puede terminar su conversaci\'on y cerrar ordenamdamente: es m\'as seguro pero si el hilo est\'a bloqueado \alert{no} se desbloquear\'a.
+\item Y si el hilo esta bloqueado en otra operaci\'on? Como en un \lstinline[style=normal]!queue_safe.pull()!? No hay una soluci\'on gen\'erica.
+}
+
+\begin{frame}[fragile,label=M3]{Servidor multi-cliente (final): cierre ordenado}{}
+
+% -------------------------------------------------
+% Start the picture
+\begin{tikzpicture}[%
+    >=latex,              % Nice arrows; your taste may be different
+    start chain=going below,    % General flow is top-to-bottom
+    node distance=4mm and 50mm, % Global setup of box spacing
+    every join/.style={norm},   % Default linetype for connecting boxes
+    ]\footnotesize
+
+\tikzset{
+  base/.style={draw, on chain, on grid, align=left, minimum height=4ex},
+  proc/.style={base, rounded corners},
+  % coord node style is used for placing corners of connecting lines
+  coord/.style={coordinate, on chain, on grid, node distance=6mm and 25mm},
+  namethread/.style={base, align=center, draw=none, node distance=6mm and 25mm},
+  % -------------------------------------------------
+  % Connector line styles for different parts of the diagram
+  norm/.style={->, draw, black, line width=0.03cm},
+  ret/.style={->, draw, black, line width=0.03cm},
+  snakearrow/.style={-, decorate, line width=0.03cm, decoration={snake,amplitude=.6mm,segment length=2mm,post length=1mm}},
+  threadarrow/.style={->, dashed, draw, black, line width=0.03cm},
+}
+
+%Primer hilo (main)
+\node [coord] (mainfork)  {};
+
+\node [proc, below=3em of mainfork, nodevisible on={<1,2>}] (leerstdin) {
+   \lstinline[style=normal]!c = cin.getc()!
+};
+
+\node [proc, below=14em of leerstdin, nodevisible on={<1,3,4>}] (sktclose) {
+   \lstinline[style=normal]!skt.close()!
+};
+
+\node [proc, nodevisible on={<1,4>}] (thjoin) {
+   \lstinline[style=normal]!aceptador.join()!
+};
+
+% Hilo aceptador
+\node [proc, right=3.8cm of leerstdin, nodevisible on={<1,2>}] (sktaccept) {
+   \lstinline[style=normal]!peer = skt.accept()!\\
+    \lstinline[style=normal]!clients.add(!\\
+     \lstinline[style=normal]!    ThClient(peer))!
+};
+
+\node [proc, nodevisible on={<1,2>}] (reap) {
+   \lstinline[style=normal]!for (cli in clients)!\\
+    \lstinline[style=normal]!   if cli.is_dead()!\\
+   \lstinline[style=normal]!      cli.join()!\\
+   \lstinline[style=normal]!      free/delete cli!
+};
+
+\node [proc, nodevisible on={<1,3>}] (stopreap) {
+    \lstinline[style=normal]!for (cli in clients)!\\
+   \lstinline[style=normal]!   cli.stop()!\\
+   \lstinline[style=normal]!   cli.join()!\\
+   \lstinline[style=normal]!   free/delete cli!
+};
+
+% hilo cliente
+\node [proc, right=4cm of reap, nodevisible on={<1,2,3>}] (peerreadwrite) {
+   \lstinline[style=normal]!peer.send/recv!
+};
+
+
+\node [namethread, above=1em of mainfork] (abovemainfork)  {(main)};
+\node [namethread, above=4em of sktaccept] (abovesktaccept)  {(aceptador)};
+\node [namethread, above=4em of peerreadwrite] (abovepeerreadwrite)  {(cliente i)};
+
+\node [coord, below=3em of thjoin] (belowthjoin)  {};
+\node [coord, below=4em of stopreap] (belowstopreap)  {};
+\node [coord, below=3em of peerreadwrite] (belowpeerreadwrite)  {};
+
+\draw [->, norm,arrowvisible on={<1,3>}] (leerstdin) -- (sktclose);
+\draw [->, norm,arrowvisible on={<1,4>}] (sktclose) -- (thjoin);
+\draw [->, norm,arrowvisible on={<1,2>}] (sktaccept) -- (reap);
+
+\draw [->, ret,arrowvisible on={<1,2>}] (leerstdin.west) to[out=160,in=115,distance=2.3em] (leerstdin.north);
+\draw [->, ret,arrowvisible on={<1,2>}] (reap.west) to[out=115,in=155,distance=6em] (sktaccept.north);
+\draw [->, ret,arrowvisible on={<1,2,3>}] (peerreadwrite.west) to[out=160,in=115,distance=2.3em] (peerreadwrite.north);
+
+\draw [->, ret,arrowvisible on={<1,3>}] (sktaccept.east) to[out=280,in=5,distance=8em] (stopreap.north);
+
+\draw [->,threadarrow,arrowvisible on={<1,2>}] (mainfork.east) -- (abovesktaccept.south);
+\draw [->,threadarrow,arrowvisible on={<1,2>}] (sktaccept.east) -- (abovepeerreadwrite.south);
+
+\draw [->,threadarrow,arrowvisible on={<1,2>}] (belowpeerreadwrite.south) -- (reap.east);
+\draw [->,threadarrow,arrowvisible on={<1,3,4>}] (belowpeerreadwrite.south) -- (stopreap.east);
+\draw [->,threadarrow,arrowvisible on={<1,4>}] (belowstopreap.south) -- (thjoin.east);
+
+\draw [snakearrow] (abovemainfork) -- (mainfork);
+\draw [snakearrow] (mainfork) -- (leerstdin);
+\draw [snakearrow] (abovesktaccept) -- (sktaccept);
+\draw [snakearrow] (abovepeerreadwrite) -- (peerreadwrite);
+
+\draw [snakearrow] (thjoin) -- (belowthjoin);
+\draw [snakearrow] (stopreap) -- (belowstopreap);
+\draw [snakearrow] (peerreadwrite) -- (belowpeerreadwrite);
+
+\end{tikzpicture}
+\end{frame}
+
+\begin{frame}[fragile,label=M5]{Hilos de comunicaci\'on}{}
+
+% -------------------------------------------------
+% Start the picture
+\begin{tikzpicture}[%
+    >=latex,              % Nice arrows; your taste may be different
+    start chain=going below,    % General flow is top-to-bottom
+    node distance=4mm and 50mm, % Global setup of box spacing
+    every join/.style={norm},   % Default linetype for connecting boxes
+    ]\footnotesize
+
+\tikzset{
+  base/.style={draw, on chain, on grid, align=left, minimum height=4ex},
+  proc/.style={base, rounded corners},
+  % coord node style is used for placing corners of connecting lines
+  coord/.style={coordinate, on chain, on grid, node distance=6mm and 25mm},
+  namethread/.style={base, align=center, draw=none, node distance=6mm and 25mm},
+  % -------------------------------------------------
+  % Connector line styles for different parts of the diagram
+  norm/.style={->, draw, black, line width=0.03cm},
+  ret/.style={->, draw, black, line width=0.03cm},
+  snakearrow/.style={-, decorate, line width=0.03cm, decoration={snake,amplitude=.6mm,segment length=2mm,post length=1mm}},
+  threadarrow/.style={->, dashed, draw, black, line width=0.03cm},
+}
+
+\node [proc] (peerreadwrite) {
+   \lstinline[style=normal]!peer.send/recv!
+};
+
+\node [proc, right=5cm of peerreadwrite] (peerwrite) {
+   \lstinline[style=normal]!peer.send!
+};
+\node [proc, right=2.6cm of peerwrite] (peerread) {
+   \lstinline[style=normal]!peer.recv!
+};
+
+\node [namethread, above=4em of peerreadwrite] (abovepeerreadwrite)  {(cliente i)};
+\node [namethread, above=4em of peerwrite] (abovepeerwrite)  {(cliente i, escritor)};
+\node [namethread, above=4em of peerread] (abovepeerread)  {(cliente i, lector)};
+
+\node [coord, below=3em of peerreadwrite] (belowpeerreadwrite)  {};
+\node [coord, below=3em of peerwrite] (belowpeerwrite)  {};
+\node [coord, below=3em of peerread] (belowpeerread)  {};
+
+
+\draw [snakearrow] (abovepeerreadwrite) -- (peerreadwrite);
+\draw [snakearrow] (abovepeerwrite) -- (peerwrite);
+\draw [snakearrow] (abovepeerread) -- (peerread);
+
+\draw [snakearrow] (peerreadwrite) -- (belowpeerreadwrite);
+\draw [snakearrow] (peerwrite) -- (belowpeerwrite);
+\draw [snakearrow] (peerread) -- (belowpeerread);
+
+\end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item Un socket puede ser leido (\lstinline[style=normal]!recv!) por un hilo y escrito (\lstinline[style=normal]!send!) por otro. La lectura no entra en conflicto con la escritura.
+\item Pero hacer un \lstinline[style=normal]!send! (o un \lstinline[style=normal]!recv!) sobre un mismo socket desde m\'ultiples hilos trae problemas de concurrencia!
+}
+
+\end{document}
+
+
