@@ -11,7 +11,13 @@ int main(int argc, char** argv){
         // Usar factory
         SdlTexture im("cat.gif", window);
         Area srcArea(0, 0, 300, 300);
-        window.renderTexture(im.getTexture(), srcArea, destArea);
+        Area destArea(100, 100, 300, 300);
+        im.render(srcArea, destArea);
         window.render();
         SDL_Delay(3000);
+    } catch (std::exception& e) {
+        std::cout << e.what() << std::endl;
+        return 1;
+    }
+    return 0;
 }
