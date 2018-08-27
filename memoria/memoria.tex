@@ -365,9 +365,9 @@ void qsort(void *base,
 
 int cmp_personas(const void* a, const void* b) {
     struct Persona *pa = (struct Persona*)a;
-    struct Persona *pb = (struct Persona*)a;
+    struct Persona *pb = (struct Persona*)b;
 
-    return pa->edad < pb->edad;
+    return pa->edad - pb->edad;
 }
 
          \end{lstlisting}
