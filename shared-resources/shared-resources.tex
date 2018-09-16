@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
          \end{lstlisting}
 \end{frame}
 \note[itemize] {
-\item Como vimos en la clase pasada, en C++11 podemos ejecutar una funci\'on en su propio hilo con \lstinline[style=normal]!std::thread!
+\item En C++11 podemos ejecutar una funci\'on en su propio hilo con \lstinline[style=normal]!std::thread!
 \item Luego, debemos esperar a que los hilos terminen sincronizando las ejecuciones con \lstinline[style=normal]!join!
 }
 
@@ -113,7 +113,7 @@ mov counter <-- eax@
    \end{columns}
 \end{frame}
 \note[itemize] {
-\item Como vimos en la clase pasada los hilos comparten el heap y el data segment.
+\item Los hilos comparten el heap y el data segment.
 \item Por cada hilo tiene su propio stack y su propio set de registros.
 \item En el caso fel\'iz las instrucciones que mutan una variable compartida no se interfieren entre s\'i y el resultado final es el esperado: \lstinline[style=normal]!counter == 2!
 }
@@ -223,8 +223,10 @@ counter = 1
    \end{columns}
 \end{frame}
 \note[itemize] {
-\item En el presente caso el hilo 1 no pudo completar su escritura dando resultados incorrectos. Esto se lo denomina race condition.
+\item Una \alert{race condition} se debe al acceso no-at\'omico de lecto/escritura de un recurso compartido.
 \item Si el recurso compartido es inmutable o solamente se accede a \'el para operaciones de lectura, no existe la posibilidad de tal error.
+\item En el presente caso el hilo 1 no pudo completar su escritura dando resultados incorrectos. Esto se lo denomina race condition.
+\item Aunque es comun ver el t\'ermino \alert{race condition} en programacion multithreading, el problema pueda darse en otros contextos como en la programaci\'on multiprocess o en la programaci\'on orientada a eventos (donde los handlers no sean at\'omicos).
 }
 
 \begin{frame}[fragile,label=RM]{Sincronizaci\'on: mutual exclusion}
@@ -240,8 +242,8 @@ void inc() {
          \end{lstlisting}
 \end{frame}
 \note[itemize] {
-\item Para evitar la race condition debemos hacer que los hilos se coordinen entre s\'i para evitar que accedan al objeto compartido a la vez.
-\item Existen varios estrategias de sincronizaci\'on: sem\'aforos, colas, sockets (estos \'ultimos tambi\'en usados para comunicaci\'on)
+\item Para evitar la \alert{race condition} debemos hacer que los hilos se coordinen entre s\'i para evitar que accedan al objeto compartido a la vez.
+\item Existen varias estrategias de sincronizaci\'on: sem\'aforos, colas, sockets (estos \'ultimos tambi\'en usados para comunicaci\'on)
 \item Un mutex es un objeto que nos permitir\'a forzar la ejecuci\'on de un c\'odigo de forma exclusiva por un hilo a la vez. En C++ \lstinline[style=normal]!std::mutex!
 }
 
@@ -352,7 +354,7 @@ eax =
 \end{frame}
 \note[itemize] {
 \item Efectivamente el uso de un mutex hace que un solo un hilo a la vez puedan acceder al objeto compartido y modificarlo.
-\item Por supuesto, una vez accedido al recurso, el hilo debe liberar el mutex, de otro modo el recurso queda inaccesible para el resto de los hilos, potencialmente llevando a una situaci\'on de deadlock.
+\item Por supuesto, una vez accedido al recurso, el hilo debe liberar el mutex, de otro modo el recurso queda inaccesible para el resto de los hilos, potencialmente llevando a una situaci\'on de \alert{dead lock}.
 }
 
 \begin{frame}[fragile]{Protecci\'on de los recursos: monitor}
@@ -429,7 +431,7 @@ void add_uniq(int x) {
 \note[itemize] {
 \item Pero usar mutex/monitor no es garant\'ia: no es solo una cuesti\'on de proteger cada m\'etodo del recuso con un mutex.
 \item En este caso hay una race condition: un hilo puede preguntar si un elemento est\'a en la list y si no agregarlo. Pero justo antes de llamar a \lstinline[style=normal33]!list.add! otro hilo ejecuta el mismo fragmento de c\'odigo, preguntando y agregando el mismo valor. Luego, el hilo original termina agregando un valor que ya est\'a en la lista.
-\item Esto se debe a que las operaciones \lstinline[style=normal33]!list.has! y \lstinline[style=normal33]!list.add! son dependientes y deben ejecutarse de forma at\'omica. Esto es lo que se conoce como una critical section.
+\item Esto se debe a que las operaciones \lstinline[style=normal33]!list.has! y \lstinline[style=normal33]!list.add! son dependientes y deben ejecutarse de forma at\'omica. Esto es lo que se conoce como una \alert{critical section}.
 }
 
 \begin{frame}[fragile]{M\'etodos de un monitor: critical sections}
@@ -462,8 +464,8 @@ void add_uniq(int x) {
    \end{columns}
 \end{frame}
 \note[itemize] {
-\item Una buena implementaci\'on de un monitor no solo encapsula el recurso y el mutex sino que adem\'as ofrece un m\'etodo por cada critical section.
-\item La intefaz p\'ublica de un monitor esta moldeada por las critical sections.
+\item Una buena implementaci\'on de un monitor no solo encapsula el recurso y el mutex sino que adem\'as ofrece un m\'etodo por cada \alert{critical section}.
+\item La intefaz p\'ublica de un monitor esta moldeada por las \alert{critical sections}.
 }
 
 
