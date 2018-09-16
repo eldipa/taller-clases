@@ -1,0 +1,503 @@
+
+\input{../preamble.tex}
+
+\title%
+{Multithreading y recursos compartidos}
+
+\subject{Multithreading y recursos compartidos}
+
+\begin{document}
+
+\begin{frame}
+   \titlepage
+\end{frame}
+
+\begin{frame}[fragile,label=RM]{Multithreading}
+         \begin{lstlisting}[style=normal]
+int counter = 0;
+
+void inc() {
+    ++counter;
+}
+
+int main(int argc, char* argv[]) {
+    std::thread t1 {inc};
+    std::thread t2 {inc};
+
+    t1.join(); t2.join();
+    return counter;
+}
+         \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Como vimos en la clase pasada, en C++11 podemos ejecutar una funci\'on en su propio hilo con \lstinline[style=normal]!std::thread!
+\item Luego, debemos esperar a que los hilos terminen sincronizando las ejecuciones con \lstinline[style=normal]!join!
+}
+
+
+
+\begin{frame}[fragile]{Instrucciones no at\'omicas}
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+         \begin{lstlisting}[style=normal]
+void inc() {
+    ++counter;
+}
+         \end{lstlisting}
+      \end{column}
+      \begin{column}{.45\linewidth}
+         \begin{lstlisting}[style=normal]
+mov eax <-- counter
+add eax <-- 1
+mov counter <-- eax
+         \end{lstlisting}
+      \end{column}
+   \end{columns}
+\end{frame}
+\note[itemize] {
+\item En general las instrucciones no son intrucciones at\'omicas. La intrucci\'on m\'as simple en C++ \lstinline[style=normal]!++counter! requiere la ejecuci\'on de tres instrucciones del microprocesador.
+\item Por supuesto, los detalles de que instrucciones y cuantas son ejecutadas por el microprocesador dependen de la arquitectura de este.
+}
+
+
+\begin{frame}[fragile]{Acceso concurrente: caso fel\'iz}
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+          Thread 1
+         \begin{lstlisting}[style=dimmided,firstnumber=0]
+         @
+mov eax <-- counter@@
+add eax <-- 1@@
+mov counter <-- eax@
+---
+---
+---
+         \end{lstlisting}
+      \end{column}
+      \begin{column}{.45\linewidth}
+          Thread 2
+         \begin{lstlisting}[style=dimmided,firstnumber=0]
+
+---
+---
+---@
+mov eax <-- counter@@
+add eax <-- 1@@
+mov counter <-- eax@
+         \end{lstlisting}
+      \end{column}
+   \end{columns}
+    \vspace{1em}
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+          Registros del Thread 1\\
+\only<1>{eax = 0}
+\only<2->{eax = 1}
+      \end{column}
+      \begin{column}{.45\linewidth}
+          Registros del Thread 2\\
+\only<1-3>{eax = }
+\only<4>{eax = 1}
+\only<5->{eax = 2}
+      \end{column}
+   \end{columns}
+    \vspace{1.4em}
+    \centering
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+          Data segment (Threads 1 y 2)\\
+\only<1-2>{counter = 0}
+\only<3-5>{counter = 1}
+\only<6>{counter = 2}
+      \end{column}
+   \end{columns}
+\end{frame}
+\note[itemize] {
+\item Como vimos en la clase pasada los hilos comparten el heap y el data segment.
+\item Por cada hilo tiene su propio stack y su propio set de registros.
+\item En el caso fel\'iz las instrucciones que mutan una variable compartida no se interfieren entre s\'i y el resultado final es el esperado: \lstinline[style=normal]!counter == 2!
+}
+
+\begin{frame}[fragile]{Acceso concurrente: race condition}
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+          Thread 1
+         \begin{lstlisting}[style=dimmided,firstnumber=0]
+         @
+mov eax <-- counter@@
+add eax <-- 1@
+---
+---
+---
+mov counter <-- eax
+         \end{lstlisting}
+      \end{column}
+      \begin{column}{.45\linewidth}
+          Thread 2
+         \begin{lstlisting}[style=dimmided,firstnumber=0]
+
+---
+---@
+mov eax <-- counter@@
+add eax <-- 1@@
+mov counter <-- eax@
+---
+         \end{lstlisting}
+      \end{column}
+   \end{columns}
+    \vspace{1em}
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+          Registros del Thread 1\\
+\only<1>{eax = 0}
+\only<2->{eax = 1}
+      \end{column}
+      \begin{column}{.45\linewidth}
+          Registros del Thread 2\\
+\only<1-2>{eax = }
+\only<3>{eax = 0}
+\only<4->{eax = 1}
+      \end{column}
+   \end{columns}
+    \vspace{1.4em}
+    \centering
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+          Data segment (Threads 1 y 2)\\
+\only<1-4>{counter = 0}
+\only<5>{counter = 1}
+%\only<6>{counter = 1}
+      \end{column}
+   \end{columns}
+\end{frame}
+\note[itemize] {
+\item Pero el Sistema Operativo puede decidir detener un hilo arbitrariamente y comenzar a ejecutar otro.
+\item Cuando se accede a un recurso compartido, mutable, para operaciones de lectura y escritura, se abre la posibilidad de que la modificaci\'on se realize de forma incompleta. 
+}
+
+\begin{frame}[fragile]{Acceso concurrente: race condition}
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+          Thread 1
+         \begin{lstlisting}[style=dimmided42,firstnumber=0]
+         @
+mov eax <-- counter
+add eax <-- 1@
+---
+---
+---@
+mov counter <-- eax@
+         \end{lstlisting}
+      \end{column}
+      \begin{column}{.45\linewidth}
+          Thread 2
+         \begin{lstlisting}[style=dimmided42,firstnumber=0]
+
+---
+---@
+mov eax <-- counter
+add eax <-- 1
+mov counter <-- eax@
+---
+         \end{lstlisting}
+      \end{column}
+   \end{columns}
+    \vspace{1em}
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+          Registros del Thread 1\\
+eax = 1
+      \end{column}
+      \begin{column}{.45\linewidth}
+          Registros del Thread 2\\
+eax = 1
+      \end{column}
+   \end{columns}
+    \vspace{1.4em}
+    \centering
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+          Data segment (Threads 1 y 2)\\
+counter = 1
+      \end{column}
+   \end{columns}
+\end{frame}
+\note[itemize] {
+\item En el presente caso el hilo 1 no pudo completar su escritura dando resultados incorrectos. Esto se lo denomina race condition.
+\item Si el recurso compartido es inmutable o solamente se accede a \'el para operaciones de lectura, no existe la posibilidad de tal error.
+}
+
+\begin{frame}[fragile,label=RM]{Sincronizaci\'on: mutual exclusion}
+         \begin{lstlisting}[style=normal]
+int counter = 0;
+std::mutex m;
+
+void inc() {
+    m.lock();
+    ++counter;
+    m.unlock();
+}
+         \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Para evitar la race condition debemos hacer que los hilos se coordinen entre s\'i para evitar que accedan al objeto compartido a la vez.
+\item Existen varios estrategias de sincronizaci\'on: sem\'aforos, colas, sockets (estos \'ultimos tambi\'en usados para comunicaci\'on)
+\item Un mutex es un objeto que nos permitir\'a forzar la ejecuci\'on de un c\'odigo de forma exclusiva por un hilo a la vez. En C++ \lstinline[style=normal]!std::mutex!
+}
+
+\begin{frame}[fragile]{Acceso at\'omico}
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+          Thread 1
+         \begin{lstlisting}[style=dimmided,firstnumber=0]
+         @
+siz m@@
+mov eax <-- counter@@
+add eax <-- 1@
+---
+mov counter <-- eax
+zer m
+---
+         \end{lstlisting}
+      \end{column}
+      \begin{column}{.45\linewidth}
+          Thread 2
+         \begin{lstlisting}[style=dimmided,firstnumber=0]
+
+---
+---
+---@
+siz m@
+---
+---
+siz m
+         \end{lstlisting}
+      \end{column}
+   \end{columns}
+    \vspace{0.8em}
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+          Registros del Thread 1\\
+\only<1>{eax = }
+\only<2>{eax = 0}
+\only<3->{eax = 1}
+      \end{column}
+      \begin{column}{.45\linewidth}
+          Registros del Thread 2\\
+\only<1->{eax = }
+      \end{column}
+   \end{columns}
+    \vspace{1.4em}
+    \centering
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+          Data segment (Threads 1 y 2)\\
+          \only<1->{counter = 0  \hspace{0.6em}  mutex = 1}
+      \end{column}
+   \end{columns}
+\end{frame}
+\note[itemize] {
+\item El uso del mutex puede verse como una variable booleana. La instrucci\'on \lstinline[style=normal]!siz! setea a 1 si la variable es 0 de forma at\'omica mientras que \lstinline[style=normal]!zer! setea la variable a 0 de forma at\'omica. 
+\item Cuando el hilo 2 trata de tomar or adquirir el mutex (en C++ \lstinline[style=normal]!m.lock()!), la instrucci\'on \lstinline[style=normal]!siz! falla (el variable no es 0) y el hilo deja de ejecutarse.
+}
+
+\begin{frame}[fragile]{Acceso at\'omico}
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+          Thread 1
+         \begin{lstlisting}[style=dimmided42,firstnumber=0]
+         @
+siz m
+mov eax <-- counter
+add eax <-- 1@
+---@
+mov counter <-- eax
+zer m@
+---
+         \end{lstlisting}
+      \end{column}
+      \begin{column}{.45\linewidth}
+          Thread 2
+         \begin{lstlisting}[style=dimmided42,firstnumber=0]
+
+---
+---
+---@
+siz m@
+---
+---
+siz m
+         \end{lstlisting}
+      \end{column}
+   \end{columns}
+    \vspace{0.8em}
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+          Registros del Thread 1\\
+eax = 1
+      \end{column}
+      \begin{column}{.45\linewidth}
+          Registros del Thread 2\\
+eax = 
+      \end{column}
+   \end{columns}
+    \vspace{1.4em}
+    \centering
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+          Data segment (Threads 1 y 2)\\
+          counter = 1  \hspace{0.6em}  mutex = 0
+      \end{column}
+   \end{columns}
+\end{frame}
+\note[itemize] {
+\item Efectivamente el uso de un mutex hace que un solo un hilo a la vez puedan acceder al objeto compartido y modificarlo.
+\item Por supuesto, una vez accedido al recurso, el hilo debe liberar el mutex, de otro modo el recurso queda inaccesible para el resto de los hilos, potencialmente llevando a una situaci\'on de deadlock.
+}
+
+\begin{frame}[fragile]{Protecci\'on de los recursos: monitor}
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+         \begin{lstlisting}[style=normal33]
+class ProtectedCounter {
+  int counter;
+  std::mutex m;
+
+  public:
+  void inc() {
+      m.lock();
+      ++counter;
+      m.unlock;
+  }
+};
+         \end{lstlisting}
+      \end{column}
+      \begin{column}{.45\linewidth}
+         \begin{lstlisting}[style=normal33]
+ProtectedCounter counter;
+
+void inc() {
+    counter.inc();
+}
+         \end{lstlisting}
+      \end{column}
+   \end{columns}
+\end{frame}
+\note[itemize] {
+\item El recurso compartido y el mutex se usan en combinaci\'on.
+\item Una buena pr\'actica es la de encapsular tanto el recurso como su mutex en un objeto que sabe como protegerse a si mismo.
+\item Este patr\'on es llamado Monitor y es otra forma de sincronizaci\'on que algunos lenguajes ofrecen directamente.
+}
+
+\begin{frame}[fragile]{Proteger es m\'as que usar mutexs}
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+         \begin{lstlisting}[style=normal33]
+class ProtectedList {
+  std::list<int> list;
+  std::mutex m;
+
+  public:
+  bool has(int x) {
+      m.lock();
+      bool b = list.has(x);
+      m.unlock;
+      return b;
+  }
+
+  void add(int x) {
+      m.lock();
+      list.add(x);
+      m.unlock;
+  }
+};
+         \end{lstlisting}
+      \end{column}
+      \begin{column}{.45\linewidth}
+         \begin{lstlisting}[style=normal33]
+ProtectedList list;
+
+void add_uniq(int x) {
+    if (not list.has(x)) {
+        list.add(x);
+    }
+}
+         \end{lstlisting}
+      \end{column}
+   \end{columns}
+\end{frame}
+\note[itemize] {
+\item Pero usar mutex/monitor no es garant\'ia: no es solo una cuesti\'on de proteger cada m\'etodo del recuso con un mutex.
+\item En este caso hay una race condition: un hilo puede preguntar si un elemento est\'a en la list y si no agregarlo. Pero justo antes de llamar a \lstinline[style=normal33]!list.add! otro hilo ejecuta el mismo fragmento de c\'odigo, preguntando y agregando el mismo valor. Luego, el hilo original termina agregando un valor que ya est\'a en la lista.
+\item Esto se debe a que las operaciones \lstinline[style=normal33]!list.has! y \lstinline[style=normal33]!list.add! son dependientes y deben ejecutarse de forma at\'omica. Esto es lo que se conoce como una critical section.
+}
+
+\begin{frame}[fragile]{M\'etodos de un monitor: critical sections}
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+         \begin{lstlisting}[style=normal33]
+class ProtectedList {
+  std::list<int> list;
+  std::mutex m;
+
+  public:
+  void add_if_hasnt(int x) {
+      m.lock();
+      if (not list.has(x))
+          list.add(x);
+      m.unlock;
+  }
+};
+         \end{lstlisting}
+      \end{column}
+      \begin{column}{.45\linewidth}
+         \begin{lstlisting}[style=normal33]
+ProtectedList list;
+
+void add_uniq(int x) {
+    list.add_if_hasnt(x);
+}
+         \end{lstlisting}
+      \end{column}
+   \end{columns}
+\end{frame}
+\note[itemize] {
+\item Una buena implementaci\'on de un monitor no solo encapsula el recurso y el mutex sino que adem\'as ofrece un m\'etodo por cada critical section.
+\item La intefaz p\'ublica de un monitor esta moldeada por las critical sections.
+}
+
+
+\appendix
+\section<presentation>*{\appendixname}
+\subsection<presentation>*{Referencias}
+
+\begin{frame}[allowframebreaks]
+   \frametitle<presentation>{Referencias}
+
+   \begin{thebibliography}{10}
+
+         \beamertemplatebookbibitems
+         % Start with overview books.
+
+      \bibitem{Stroustrup}
+         Bjarne Stroustrup.
+         \newblock {\em The C++ Programming Language}.
+         \newblock Addison Wesley, Fourth Edition.
+
+      \bibitem{Tanenbaum}
+         Andrew S. Tanenbaum.
+         \newblock {\em Modern Operating System}.
+         \newblock Prentice Hall, Second Edition.
+
+      \bibitem{Ari}
+         Mordechai Ben-Ari.
+         \newblock {\em Principles of Concurrent and Distributed Programming}
+         \newblock Addison Wesley, Second Edition.
+
+
+   \end{thebibliography}
+\end{frame}
+
+\end{document}
+
+
