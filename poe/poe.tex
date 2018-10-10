@@ -1,0 +1,176 @@
+\input{../preamble.tex}
+
+\title%
+{Programaci\'on orientada a eventos}
+
+
+\subject{Programaci\'on orientada a eventos}
+
+
+\begin{document}
+
+\begin{frame}
+   \titlepage
+\end{frame}
+
+
+\section{Programaci\'on orientada a eventos}
+
+\begin{frame}[fragile]{Programaci\'on orientada a eventos}
+        \begin{tikzpicture}[remember picture,overlay]
+            \begin{scope}[scale=0.8, transform shape]
+            \node[yshift=-1cm,at=(current page.center)] {
+                \includegraphics<1>[width=\paperwidth]{imgs/eventloop.png}
+            };
+            \end{scope}
+        \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item M\'ultiple fuentes de eventos: el input del usuario (mouse, teclado) y el paso del tiempo son solo algunos ejemplos.
+\item El mismo programa puede generar eventos para que sean procesados luego.
+\item Si m\'ultiples events son generados, estos se guardan en una cola de eventos (dependiendo de la librer\'ia los eventos son sacados en el orden en que entraron FIFO o no).
+}
+
+\begin{frame}[fragile]{Prohibido usar handlers lentos}
+   \begin{lstlisting}[style=normal]
+void save_button_handler() {
+   FILE *f = fopen("data.txt", "wt");
+
+   /* ... */
+   fwrite(data, sizeof(char), data_sz, f);
+   /* ... */
+
+   fclose(f);
+}
+   \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Los handlers no deben bloquearse ni realizar tareas que lleven mucho tiempo para no bloquear a todo el programa.
+\item Se puede tomar un handler y particionarlo en subpartes para ejecutarlo iterativa e incrementalmente sin bloquear el programa. No veremos esta alternativa en la materia.
+}
+
+\begin{frame}[fragile]{Handlers lentos: multithreading}
+   \begin{lstlisting}[style=normal]
+void save_background() {
+   FILE *f = fopen("data.txt", "wt");
+
+   /* ... */
+   fwrite(data, sizeof(char), data_sz, f);
+   /* ... */
+
+   fclose(f);
+}
+
+void save_button_handler() {
+   std::thread t1 {save_background};
+}
+   \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Si es necesario, el handler puede lanzar un hilo para hacer la tarea en background.
+\item Esto plantea una serie de preguntas: quien hace el \lstinline[style=normal]!join! sobre el hilo? Podr\'ia haber otro hilo haciendo joins (ineficiente) o prodr\'iamos usar m\'as eventos.
+}
+
+\begin{frame}[fragile]{Handlers lentos: multithreading - join}
+   \begin{lstlisting}[style=normal]
+void save_background() {
+   FILE *f = fopen("data.txt", "wt");
+
+   /* ... */
+   fwrite(data, sizeof(char), data_sz, f);
+   /* ... */
+
+   fclose(f);
+   emit_event("joinme", thread);
+}
+
+void save_button_handler() {
+   std::thread t1 {save_background};
+}
+
+void joinme_handler(thread) {
+    thread.join();
+}
+   \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Al finalizar \lstinline[style=normal]!save_background! emite un evento y un handler registrado hara el \lstinline[style=normal]!join!.
+\item El \lstinline[style=normal]!joinme_handler! es llamado al ocurrir el evento y hace el \lstinline[style=normal]!join! sin bloquearse.
+}
+
+\begin{frame}[fragile]{B\'usqueda de los handlers (tree version)}
+        \begin{tikzpicture}[remember picture,overlay]
+            \begin{scope}[scale=0.45, transform shape]
+            \node[yshift=-1cm,at=(current page.center)] {
+                \includegraphics<1>[width=\paperwidth]{imgs/wp.png}
+            };
+            \end{scope}
+        \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item Dado un evento, c\'omo se busca a su handler? Depende de la librer\'ia usada.
+\item En las librer\'ias gr\'aficas y en los web browsers, las ventanas y p\'aginas web son representadas por estructuras jer\'arquicas (\'arboles).
+}
+
+\begin{frame}[fragile]{B\'usqueda de los handlers (tree version): capture phase}
+        \begin{tikzpicture}[remember picture,overlay]
+            \begin{scope}[scale=0.45, transform shape]
+            \node[yshift=-1cm,at=(current page.center)] {
+                \includegraphics<1>[width=\paperwidth]{imgs/wp2.png}
+            };
+            \end{scope}
+        \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item En estas estructuras tipo \'arbol un evento puede ser capturado por varios objetos: un click en un texto puede verse como un click en el bot\'on que tiene el texto o como un click en el todo que tiene al bot\'on.
+\item En los web browsers la b\'usqueda del handler se hace del todo al espec\'ifico en lo que se conoce como \lstinline[style=normal]!capture phase!.
+}
+
+\begin{frame}[fragile]{B\'usqueda de los handlers (tree version): bubble phase}
+        \begin{tikzpicture}[remember picture,overlay]
+            \begin{scope}[scale=0.45, transform shape]
+            \node[yshift=-1cm,at=(current page.center)] {
+                \includegraphics<1>[width=\paperwidth]{imgs/wp3.png}
+            };
+            \end{scope}
+        \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item En una etapa posterior, el web browser hace una segunda pasada en el orden inverso de lo espec\'ifico a lo general, de ah\'i el nombre \lstinline[style=normal]!bubble phase!.
+\item Otras librer\'ias gr\'aficas tienen b\'usquedas similares, otras s\'olo tienen una fase de b\'usqueda. Otras incluso simplemente levantan un bit en un array.
+\item En general, un handler puede notificar que el evento debe cancelarse: el resto de los handlers no es llamado. Pero como todo, depender\'a de la librer\'ia usada.
+}
+
+
+\begin{frame}[fragile]{B\'usqueda de los handlers (bit version): select}
+   \begin{lstlisting}[style=normal]
+fd_set rfds;
+struct timeval tv;
+
+while (...) {
+   FD_ZERO(&rfds);
+   FD_SET(0, &rfds); /* 0 es la entrada estandar */
+
+   /* timeout de 5 segundos */
+   tv.tv_sec = 5;
+   tv.tv_usec = 0;
+
+   if (select(1, &rfds, NULL, NULL, &tv) == -1)
+       perror("select()");
+   else if (FD_ISSET(0, &rfds))
+       read(0, ...,); /* no deberia bloquearse */
+   else
+       /* time out */
+}
+   \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item En este caso el sistema operativo nos permite ver a los file descriptors como fuentes de eventos: lectura disponible, escritura disponible, excepcion disponible.
+\item A diferencia de una librer\'ia gr\'afica, el proceso de b\'usqueda se hace con un array de bits manipulado con las macros \lstinline[style=normal]!FD_ZERO!, \lstinline[style=normal]!FD_SET! y \lstinline[style=normal]!FD_ISSET!
+\item \lstinline[style=normal]!select! se bloquea hasta que uno o varios eventos llegan sobre los file descriptors marcados: no hay tal FIFO.
+\item En la c\'atedra no se usara \lstinline[style=normal]!select! ni similares pero se deja como ejemplo.
+}
+
+\end{document}
+
+
