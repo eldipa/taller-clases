@@ -209,10 +209,14 @@
       \begin{column}{.55\linewidth}
          \begin{lstlisting}[style=normal]
 class ThClient:public Thread {
-   bool keep_talking;
+   std::atomic<bool> keep_talking;
+   std::atomic<bool> is_running;
    Socket peer;
 
    public:
+   ThClient():keep_talking(true),
+              is_running(true) {}
+
    virtual void run() {
       while (keep_talking) {
          ...
@@ -221,9 +225,8 @@ class ThClient:public Thread {
          peer.recv(...);
          ...
       }
+      is_running = false;
    }
-
-   void stop();
 };
          \end{lstlisting}
       \end{column}

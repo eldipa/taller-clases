@@ -1,6 +1,10 @@
 *.pdf
 *.ppt
 *.pptx
+*.7z
+*.log
 */tmp/
+build
+__pycache__/
 
 !*/bin/*

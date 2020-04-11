@@ -217,25 +217,25 @@ int s = send(skt,
 int s = recv(skt,
               buf,
               bytes_to_recv,
-              flags           // MSG_NOSIGNAL
+              flags           // 0
             );
 
-   (s < 0)  // Error inesperado
-  (s == 0)  // El socket fue cerrado
-   (s > 0)  // Ok: s bytes fueron enviados/recibidos
+  (s == -1)  // Error inesperado, ver errno
+   (s == 0)  // El socket fue cerrado
+    (s > 0)  // Ok: s bytes fueron enviados/recibidos
       \end{lstlisting}
 \end{frame}
 
 
-\begin{frame}[fragile]{Recepci\'on de datos incremental}
+\begin{frame}[fragile]{recvall: recepci\'on de N bytes exactos}
       \begin{lstlisting}[style=normal]
 char buf[MSG_LEN];  // buffer donde guardar los datos
 int bytes_recv = 0;
 
 while (MSG_LEN > bytes_recv && skt_still_open) {
   s = recv(skt, &buf[bytes_recv], MSG_LEN - bytes_recv - 1,
-                                                MSG_NOSIGNAL);
-  if (s < 0) { // Error inesperado
+                                                0);
+  if (s == -1) { // Error inesperado, ver errno
      /* ... */
   }
   else if (s == 0) { // Nos cerraron el socket
@@ -247,7 +247,7 @@ while (MSG_LEN > bytes_recv && skt_still_open) {
 }
       \end{lstlisting}
 \end{frame}
-\begin{frame}[fragile]{Envio de datos incremental}
+\begin{frame}[fragile]{sendall: env\'io de N bytes exactos}
       \begin{lstlisting}[style=normal]
 char buf[MSG_LEN];    // buffer con los datos a enviar
 int bytes_sent = 0;
@@ -255,7 +255,7 @@ int bytes_sent = 0;
 while (MSG_LEN > bytes_sent && skt_still_open) {
   s = send(skt, &buf[bytes_sent], MSG_LEN - bytes_sent,
                                               MSG_NOSIGNAL);
-  if (s < 0) { // Error inesperado
+  if (s == -1) { // Error inesperado, ver errno
      /* ... */
   }
   else if (s == 0) { // Nos cerraron el socket

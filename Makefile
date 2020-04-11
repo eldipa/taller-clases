@@ -1,16 +1,20 @@
 # Usage
-#  make -C <target> -f ../Makefile [pdf|handout|ppt|final]
+#  make -C <target> -f ../Makefile [pdf|handout|interactive|all]
 #
 #  <target> is the folder where the source code is
 #
 #  pdf  -> make the presentation only
-#  handout -> make the handout only
-#  ppt -> make a ppt from the presentation
+#  handout -> make the handout only,  lower their quality and compress it (7z)
+#  interactive -> make the presentation for interactive hand-writing videos
 #
-#  final -> make the handout only and compress it
-#  	    (lower their quality and using 7z)
+#  all -> make all the targets
 #
-#  The default target of the makefile is pdf, handout and ppt
+# If the <target> contains multiple .tex files, all of them will be
+# processed.
+# If only a subset is wanted, define them in the  TEXFILES env variable
+# (space separated list)
+#
+# TEXFILES=<files> make -C <target> -f ../Makefile [pdf|handout|interactive|all]
 #
 
 TMP=tmp
@@ -19,46 +23,88 @@ COMPRESS_LEVEL=screen
 COMPILE_FLAGS=-output-directory=${TMP} -output-format=pdf
 GS_FLAGS=-sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -r150 -dPDFSETTINGS=/${COMPRESS_LEVEL} -dNOPAUSE -dQUIET -dBATCH
 COMPRESS_FLAGS=-t7z -m0=lzma -mx=9 -mfb=64 -md=128m -ms=on
+PDFNUP_FLAGS=--nup 2x3 --no-landscape --paper letterpaper --frame True
 
 MAIN=$(shell basename $(CURDIR))
 
-all: pdf handout ppt
+USAGE=Usage: [TEXFILES=<files>] make -C <target> -f ../Makefile [pdf|handout|interactive|all]
+
+default:
+	@echo "${USAGE}"
+
+
+all: pdf handout interactive
 
 pdf: _prepare
-	latex ${COMPILE_FLAGS} '\def\handoutmode{0}\def\pptsupportmode{0}\input{${MAIN}}'
-	latex ${COMPILE_FLAGS} '\def\handoutmode{0}\def\pptsupportmode{0}\input{${MAIN}}'
-	mat ${TMP}/${MAIN}.pdf || true
-	mv ${TMP}/${MAIN}.pdf ${MAIN}.pdf
-
-ppt: _prepare
-	latex ${COMPILE_FLAGS} '\def\handoutmode{0}\def\pptsupportmode{1}\input{${MAIN}}'
-	latex ${COMPILE_FLAGS} '\def\handoutmode{0}\def\pptsupportmode{1}\input{${MAIN}}'
-	mat ${TMP}/${MAIN}.pdf || true
-	mv ${TMP}/${MAIN}.pdf ../pdf2pptx/${MAIN}-for-ppt.pdf
-	cd ../pdf2pptx/ && ./pdf2pptx.sh ${MAIN}-for-ppt.pdf
-	mv ../pdf2pptx/${MAIN}-for-ppt.pdf.pptx .
-	rm ../pdf2pptx/${MAIN}-for-ppt.pdf
+	set -e; if :; then			\
+	    export interactive=no;  		\
+	    export handout=no;        		\
+	    env | j2 --customize ../j2custom.py -o ../preamble-tmp.tex ../preamble.tex; \
+	    for ftex in $${TEXFILES:-*.tex}; do			\
+		echo "==> $$ftex";			\
+		sleep 0.5;				\
+	        export iname=`basename $$ftex .tex`;	\
+	        env | j2 --customize ../j2custom.py -o $$iname-tmp.tex $$iname.tex;	\
+	        latex ${COMPILE_FLAGS} '\input{$$iname-tmp}';	\
+	        latex ${COMPILE_FLAGS} '\input{$$iname-tmp}';	\
+	        rm $$iname-tmp.tex;				\
+	        mat ${TMP}/$$iname-tmp.pdf || true;		\
+	        mv ${TMP}/$$iname-tmp.pdf $$iname.pdf;		\
+	    done;					\
+	    rm ../preamble-tmp.tex;			\
+	fi
 
 handout:  _prepare
-	latex -output-directory=tmp -output-format=pdf '\def\handoutmode{1}\def\pptsupportmode{0}\input{${MAIN}}'
-	latex -output-directory=tmp -output-format=pdf '\def\handoutmode{1}\def\pptsupportmode{0}\input{${MAIN}}'
-	mat ${TMP}/${MAIN}.pdf || true
-	pdfnup ${TMP}/${MAIN}.pdf --nup 2x3 --no-landscape --paper letterpaper --frame True --suffix "handout"
-	mat ${MAIN}-handout.pdf || true
+	set -e; if :; then			\
+	    export interactive=no;  		\
+	    export handout=yes;        		\
+	    env | j2 --customize ../j2custom.py -o ../preamble-tmp.tex ../preamble.tex; \
+	    for ftex in $${TEXFILES:-*.tex}; do			\
+		echo "==> $$ftex";			\
+		sleep 0.5;				\
+	        export iname=`basename $$ftex .tex`;	\
+	        env | j2 --customize ../j2custom.py -o $$iname-tmp.tex $$iname.tex;	\
+	        latex ${COMPILE_FLAGS} '\input{$$iname-tmp}';	\
+	        latex ${COMPILE_FLAGS} '\input{$$iname-tmp}';	\
+	        rm $$iname-tmp.tex;				\
+	        pdfnup ${TMP}/$$iname-tmp.pdf ${PDFNUP_FLAGS} --suffix "handout";		\
+	        gs ${GS_FLAGS} -sOutputFile=${TMP}/$$iname-tmp-handout.${COMPRESS_LEVEL}.pdf $$iname-tmp-handout.pdf;	\
+	        rm $$iname-tmp-handout.pdf;		\
+	        mv ${TMP}/$$iname-tmp-handout.${COMPRESS_LEVEL}.pdf $$iname-handout.pdf;	\
+	        mat $$iname-handout.pdf || true;	\
+	        7z a ${COMPRESS_FLAGS} $$iname-handout.7z $$iname-handout.pdf;	\
+	    done;					\
+	    rm ../preamble-tmp.tex;			\
+	fi
 
-
-final: handout
-	gs ${GS_FLAGS} -sOutputFile=${TMP}/${MAIN}-handout.${COMPRESS_LEVEL}.pdf ${MAIN}-handout.pdf
-	mv ${TMP}/${MAIN}-handout.${COMPRESS_LEVEL}.pdf ${MAIN}-handout.pdf
-	mat ${MAIN}-handout.pdf || true
-	7z a ${COMPRESS_FLAGS} ${MAIN}.7z ${MAIN}-handout.pdf
+interactive:  _prepare
+	set -e; if :; then			\
+	    export interactive=yes;  		\
+	    export handout=no;        		\
+	    env | j2 --customize ../j2custom.py -o ../preamble-tmp.tex ../preamble.tex; \
+	    for ftex in $${TEXFILES:-*.tex}; do			\
+		echo "==> $$ftex";			\
+		sleep 0.5;				\
+	        export iname=`basename $$ftex .tex`;	\
+	        env | j2 --customize ../j2custom.py -o $$iname-tmp.tex $$iname.tex;	\
+	        latex ${COMPILE_FLAGS} '\input{$$iname-tmp}';	\
+	        latex ${COMPILE_FLAGS} '\input{$$iname-tmp}';	\
+	        rm $$iname-tmp.tex;				\
+	        mat ${TMP}/$$iname-tmp.pdf || true;		\
+	        mv ${TMP}/$$iname-tmp.pdf $$iname-interactive.pdf; \
+	    done;					\
+	    rm ../preamble-tmp.tex;			\
+	fi
 
 clean: _check
-	rm -f ${MAIN}.7z ${MAIN}.pdf ${MAIN}-handout.pdf ${MAIN}-for-ppt.pdf ${MAIN}-for-ppt.pdf.pptx
+	rm -f *.7z *.pdf *.pptx *-tmp.* *.log
 	rm -Rf ${TMP}
 
 _check:
-	[ -f ${MAIN}.tex ] || ( echo "Usage make -C <target> -f ../Makefile [pdf|handout|final]" && exit 1 )
+	# pip install j2cli
+	j2 --version
 
 _prepare: _check
 	mkdir -p ${TMP}
+	rm -Rf ${TMP}/*
+	rm -f *-tmp.tex *-tmp.pdf

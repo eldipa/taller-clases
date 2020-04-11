@@ -3,23 +3,23 @@
    Este ejemplo TIENE UN BUG (en realidad son 2 combinados).
 
    La idea de un echo server es la siguiente:
-      1) El cliente se conecta a este server y le envia un numero 
-         de 2 digitos (en texto) que representa la longitud del 
+      1) El cliente se conecta a este server y le envia un numero
+         de 2 digitos (en texto) que representa la longitud del
          mensaje que le sigue.
       2) El cliente luego envia ese mensaje de esa longitud
       3) El server lee ese mensaje y luego se lo reenvia al cliente.
 
-   Se compila con 
-      gcc -std=c99 -o echoserver echoserver.c 
+   Se compila con
+      gcc -std=c99 -o echoserver echoserver.c
 
    Se ejecuta como
       ./echoserver PORT PASSWORD
 
    donde PORT es el nombre de un servicio ("http" por ejemplo) o el numero
-   de puerto directamente (80 por ejemplo) 
+   de puerto directamente (80 por ejemplo)
    PASSWORD es un string que representa algo secreto. No tiene nada que
    ver con el echo server y es borrado de la memoria con free
-   Asi que no deberia haber ningun problema en, por ejemplo, que pongas 
+   Asi que no deberia haber ningun problema en, por ejemplo, que pongas
    tu password de facebook/clave bancaria, no?
 */
 
@@ -43,12 +43,12 @@ int recv_message(int skt, char *buf, int size) {
    bool is_the_socket_valid = true;
 
    while (received < size && is_the_socket_valid) {
-      s = recv(skt, &buf[received], size-received, MSG_NOSIGNAL);
-      
+      s = recv(skt, &buf[received], size-received, 0);
+
       if (s == 0) { // nos cerraron el socket :(
          is_the_socket_valid = false;
       }
-      else if (s < 0) { // hubo un error >(
+      else if (s == -1) { // hubo un error >(
          is_the_socket_valid = false;
       }
       else {
@@ -71,11 +71,11 @@ int send_message(int skt, char *buf, int size) {
 
    while (sent < size && is_the_socket_valid) {
       s = send(skt, &buf[sent], size-sent, MSG_NOSIGNAL);
-      
+
       if (s == 0) {
          is_the_socket_valid = false;
       }
-      else if (s < 0) {
+      else if (s == -1) {
          is_the_socket_valid = false;
       }
       else {
@@ -94,8 +94,8 @@ int send_message(int skt, char *buf, int size) {
 
 /*
    Hacemos un procesamiento a un password.
-   Como liberamos la memoria el password es eliminado asi que es seguro, no? 
-                                                que podria salir mal? 
+   Como liberamos la memoria el password es eliminado asi que es seguro, no?
+                                                que podria salir mal?
 */
 #define REPEATS 64   //agregar mas repeticiones si es necesario
 void process(char *password) {
@@ -110,7 +110,7 @@ void process(char *password) {
 
    for (i = 0; i < REPEATS; ++i) {
       buf[i] = (char*) malloc(sizeof(char) * buf_size);
-   
+
       snprintf(buf[i], buf_size, msg, password);
       buf[i][buf_size-1] = 0;
    }
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
    unsigned short len = 0;
    bool continue_running = true;
    bool is_the_accept_socket_valid = true;
-   
+
    struct addrinfo hints;
    struct addrinfo *ptr;
 
@@ -137,7 +137,7 @@ int main(int argc, char *argv[]) {
    char small_buf[MAX_SMALL_BUF_LEN];
    char *tmp;
 
-   if (argc != 3) return 1; 
+   if (argc != 3) return 1;
 
    process(argv[2]);
 
@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
 
    s = getaddrinfo(NULL, argv[1], &hints, &ptr);
 
-   if (s != 0) { 
+   if (s != 0) {
       printf("Error in getaddrinfo: %s\n", gai_strerror(s));
       return 1;
    }
@@ -200,12 +200,12 @@ int main(int argc, char *argv[]) {
          continue_running = false;
          is_the_accept_socket_valid = false;
       }
-   
+
       else {
          printf("New client\n");
          memset(small_buf, 0, MAX_SMALL_BUF_LEN);
-         recv_message(peerskt, small_buf, MAX_SMALL_BUF_LEN-1); 
-         
+         recv_message(peerskt, small_buf, MAX_SMALL_BUF_LEN-1);
+
          len = atoi(small_buf);
          printf("Echo %i bytes\n", len);
 
@@ -226,14 +226,14 @@ int main(int argc, char *argv[]) {
          close(peerskt);
       }
    }
-   
+
    shutdown(skt, SHUT_RDWR);
    close(skt);
 
    if (is_the_accept_socket_valid) {
       return 1;
-   } 
-   else { 
+   }
+   else {
       return 0;
    }
 }

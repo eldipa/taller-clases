@@ -164,7 +164,7 @@ int main(int argc, char *argv[]) {
    while (bytes_sent < request_len && is_there_a_socket_error == false && is_the_remote_socket_closed == false) {
       s = send(skt, &request[bytes_sent], request_len - bytes_sent, MSG_NOSIGNAL);
 
-      if (s < 0) {  // ups,  hubo un error
+      if (s == -1) {  // ups,  hubo un error
          printf("Error: %s\n", strerror(errno));
          is_there_a_socket_error = true;
       }
@@ -188,9 +188,9 @@ int main(int argc, char *argv[]) {
       (no es para nada optimo, pero es mas simple)
    */
    while (is_there_a_socket_error == false && is_the_remote_socket_closed == false) {
-      s = recv(skt, &response[bytes_recv], RESPONSE_MAX_LEN - bytes_recv - 1, MSG_NOSIGNAL);
+      s = recv(skt, &response[bytes_recv], RESPONSE_MAX_LEN - bytes_recv - 1, 0);
 
-      if (s < 0) {
+      if (s == -1) {
          printf("Error: %s\n", strerror(errno));
          is_there_a_socket_error = true;
       }

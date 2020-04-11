@@ -1,0 +1,291 @@
+\input{../preamble-tmp.tex}
+
+\title%
+{Excepciones en C++}
+
+
+\subject{Excepciones en C++}
+
+
+\begin{document}
+
+\begin{frame}
+   \titlepage
+\end{frame}
+
+~% if interactive is off %~
+\begin{frame}{De qu\'e va esto?}
+   \tableofcontents
+   % You might wish to add the option [pausesections]
+\end{frame}
+~% endif %~
+
+
+
+~% macro content() %~
+\section{Excepciones en C++}
+\subsection{}
+\begin{frame}[fragile]{Recolectar la mayor informaci\'on posible}
+   \visible<2>{Pobre}
+   \begin{lstlisting}[style=normal]
+void parser(/* ... */) {
+   /* ... */
+   if (/* error */)
+      throw ParserError();
+   /* ... */
+}
+   \end{lstlisting}
+
+   \visible<2>{Mucho mejor}
+   \begin{visibleenv}<2>
+   \begin{lstlisting}[style=normal, breaklines=true]
+void parser(/* ... */) {
+   /* ... */
+   if (/* error */)
+      throw ParserError("Encontre %s pero esperaba %s en el archivo %s, linea %i", found, expected, filename, line);
+   /* ... */
+}
+   \end{lstlisting}
+\end{visibleenv}
+\end{frame}
+\note[itemize] {
+\item Lo m\'as importante es explicar el error. No usar decenas de clases de errores, solo usar una o dos y que estas reciban un mensaje como par\'ametro
+\item Los mensajes deben ser lo mas descriptivos posibles. Piensen en ustedes mismos tratando de entender un error, no seria mejor que el mensaje de la excepci\'on les diga qu\'e paso y en d\'onde? Hasta ser\'ia mejor si les dice las posibles causas y soluciones!
+\item No hacer \lstinline[style=normal]!throw new Error()! (usa el heap), usar directamente \lstinline[style=normal]!throw Error()!. Eviten usar el heap innecesariamente.
+}
+
+
+\begin{frame}[fragile]{Una excepci\'on por dentro}
+   \begin{lstlisting}[style=normal]
+#include <typeinfo>
+
+#define BUF_LEN  256
+
+class OSError : public std::exception {
+   private:
+   char msg_error[BUF_LEN];
+
+   public:
+   explicit OSError(const char* fmt, ...) noexcept;
+   virtual const char *what() const noexcept;
+   virtual ~OSError() noexcept {}
+};
+   \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item En C++ cualquier cosa puede ser una excepci\'on: un \lstinline[style=normal]!int!, un puntero, un objeto. Pero es preferible un objeto cuya clase herede de \lstinline[style=normal]!std::exception!.\\
+\item Implementar un m\'etodo \lstinline[style=normal]!what()! para retornar el mensaje de error.
+\item Los m\'etodos con la keyword \lstinline[style=normal]!noexcept! en sus firmas dicen "este m\'etodo no lanzar\'a ninguna excepci\'on". Si el m\'etodo no cumple su promesa, todo el programa crashea (se invoca a la funci\'on \lstinline[style=normal]!terminate!).
+\item En C++ se puede decir que excepciones un m\'etodo puede llegar a lanzar escribiendo en su firma por ejemplo \lstinline[style=normal]!int metodo() throw(OutOfRange)! pero eviten usar este feature como documentaci\'on sobre que excepci\'ones se podr\'ian lanzar o no (al estilo Java). Hace que sus clases sean \alert{mas dif\'iciles} de extender.
+}
+
+\begin{frame}[fragile]{Wrappeo de errores de C y del sistema operativo}
+   \begin{lstlisting}[style=normal,linebackgroundcolor={%
+         \btLstHLB<1>{5}%
+         \btLstHLB<2>{4,7-10}%
+         \btLstHLB<3>{5,12,13}%
+   }]
+#include <errno.h>
+#include <cstdio>
+#include <cstdarg>
+OSError::OSError(const char* fmt, ...) noexcept {
+    _errno = errno;
+
+    va_list args;
+    va_start(args, fmt);
+    int s = vsnprintf(msg_error, BUF_LEN, fmt, args);
+    va_end(args);
+
+    strncpy(msg_error+s, strerror(_errno), BUF_LEN-s);
+    msg_error[BUF_LEN-1] = 0;
+}
+   \end{lstlisting}
+   ~% if interactive is off %~
+   \begin{itemize}
+      \only<1> {
+      \item Copiar \lstinline[style=normal]!errno! antes de hacer cualquier cosa.
+      }
+      \only<2> {
+      \item Obtener un mensaje explicativo del contexto. Aceptar un mensaje de error y argumentos variables como lo hace \lstinline[style=normal]!printf!. 
+      }
+      \only<3> {
+      \item Obtener un mensaje del sistema operativo con \lstinline[style=normal]!strerror!. Cuidado que no es \alert{not thread safe}, usar \lstinline[style=normal]!strerror_r!.\\
+      }
+   \end{itemize}
+   ~% endif %~
+\end{frame}
+\note[itemize] {
+\item Muchas funciones del sistema operativo y de C en general dicen "retorna -1 en caso de error". Esas funciones guardan en la variable global \lstinline[style=normal]!errno! un c\'odigo de error m\'as descriptivo que un simple \lstinline[style=normal]!-1!
+\item Como \lstinline[style=normal]!errno! es una variable global cualquier funci\'on puede modificarla. Ante la detecci\'on de un error, se debe copiar \lstinline[style=normal]!errno! \alert{inmediatamente} para tener una copia del c\'odigo sin miedo a que otra funci\'on posterior la sobreescriba
+\item El valor de \lstinline[style=normal]!errno! puede ser traducido a un mensaje de error con \lstinline[style=normal]!strerror! o \lstinline[style=normal]!strerror_r!, este \'ultimo thread safe.
+\item Muchas funciones de socket optan por otro mecanismo y hay que usar \lstinline[style=normal]!gai_strerror!
+\item Tanto C como C++ pueden definir funciones con una lista variable de argumentos (variadic). \lstinline[style=normal]!printf! es un ejemplo.
+\item En general es muy conveniente que las excepciones soporten un constructor que acepte un formato y un n\'umero variable de argumentos como \lstinline[style=normal]!printf! guardandose el mensaje formateado.
+}
+
+\begin{frame}[fragile]{Clases de excepciones como discriminantes}
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+         \begin{lstlisting}[style=normal]
+try {
+   parser();
+} catch(const CharNotFound &e) {
+   printf("%s", e.what());
+} catch(const ExprInvalid &e) {
+   printf("%s", e.what());
+} catch(const SyntacticError &e) {
+   printf("%s", e.what());
+} catch(const ParserError &e) {
+   printf("%s", e.what());
+} catch(const std::exception &e) {
+   printf("%s", e.what());
+} catch(...) { // ellipsis: catch anything
+   printf("Unknow error!");
+}
+         \end{lstlisting}
+      \end{column}
+      \begin{column}{.4\linewidth}
+         \begin{tikzpicture}[every tree node/.style=draw]\footnotesize
+            \tikzset{level distance=35pt}
+            \Tree [.{std::exception}
+                     [.{FileNotFound} ]
+                     [.{ParserError}
+                        [.{SyntacticError}
+                           [.{ExprInvalid}
+                               {CharNotFound}
+                           ]
+                        ]
+                     ]
+                  ]
+            \end{tikzpicture}
+      \end{column}
+   \end{columns}
+\end{frame}
+\note[itemize] {
+\item Los \lstinline[style=normal]!catch! funcionan de forma polim\'orfica. La clase de una excepci\'on no necesariamente debe coincidir con la firma del \lstinline[style=normal]!catch!: un \lstinline[style=normal]!catch! m\'as gen\'erico puede atrapar la excepci\'on igualmente.
+\item De esto se deduce que los \lstinline[style=normal]!catch! mas gen\'ericos deben estar al final
+\item Si una excepci\'on no es atrapada, continua su viaje por el stack
+\item Preferir la expresi\'on \lstinline[style=normal]!const Exception&! para atrapar excepciones. Al usar referencias se evitan copias.
+}
+
+\begin{frame}[fragile]{Simplificar!}
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+         \begin{lstlisting}[style=normal]
+try {
+   parser();
+} catch(const std:exception &e) {
+   printf("%s", e.what());
+} catch(...) {
+   printf("Unknow error!");
+}
+         \end{lstlisting}
+      \end{column}
+      \begin{column}{.4\linewidth}
+         \begin{tikzpicture}[every tree node/.style=draw]\footnotesize
+            \tikzset{level distance=35pt}
+            \Tree [.{std::exception}
+                     [.{FileNotFound} ]
+                     [.{ParserError}  ]
+                  ]
+            \end{tikzpicture}
+      \end{column}
+   \end{columns}
+    \begin{itemize}
+        \item Pocas clases de errores: no necesitamos tanto poder de discriminaci\'on. Menos clases y mejor hechas con buenos mensajes de error.
+        \item Pocos \lstinline[style=normal]!catch!, solo poner aquellos que van a hacer algo distinto con la excepci\'on.
+    \end{itemize}
+\end{frame}
+\note[itemize] {
+\item Como las clases de excepciones se usan principalmente como discriminantes en los \lstinline[style=normal]!catch!, la raz\'on de tener varias clases es por que hay c\'odigos distintos a ejecutar en cada \lstinline[style=normal]!catch!.
+\item En la pr\'actica el c\'odigo que se encuentra en los \lstinline[style=normal]!catch! es de simple loggueo que aplica a todos los errores en general. Por lo tanto no deber\'ian haber muchas clases de errores sino unas pocas pero con buenos mensajes de error.
+}
+
+\begin{frame}[fragile]{Basta de prints! Loguear a un archivo con syslog}
+   \begin{lstlisting}[style=normal, breaklines=true]
+   syslog(LOG_DEBUG, "Mensaje de debug.");
+
+   syslog(LOG_INFO, "Un mensaje informativo:"
+                    "escuchando en el puerto %i", port);
+
+   syslog(LOG_CRIT, "Un error: %s", e.what());
+   \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item En vez de logguear a la consola con un \lstinline[style=normal]!printf! se puede logguear a traves de una librer\'ia llamada \lstinline[style=normal]!syslog! (para linux) que logguea directamente a un archivo (t\'ipicamente\lstinline[style=normal]!/var/log/messages! o \lstinline[style=normal]!/var/log/syslog!) 
+\item \lstinline[style=normal]!syslog! permite logguear poniendo data extra en los mensajes: el process id, el timestamp. Data muy \'util si se trabaja con m\'ultiples procesos.
+\item Hay otras libs \'utiles similares a \lstinline[style=normal]!syslog! como \lstinline[style=normal]!log4j! o \lstinline[style=normal]!log4cpp! entre otras, todas con las mismas capacidades.
+\item Vean la p\'agina de manual de \lstinline[style=normal]!syslog!.
+}
+
+\begin{frame}[fragile]{No dejar escapar a ninguna excepci\'on}
+   \begin{lstlisting}[style=normal, breaklines=true]
+int main(int argc, char *argv[]) try {
+   /* ... */
+   return 0;
+
+} catch(const std::exception &e) {
+   syslog(LOG_CRIT, "[Crit] Error!: %s", e.what());
+   return 1;
+
+} catch(...) {
+   syslog(LOG_CRIT, "[Crit] Unknow error!");
+   return 1;
+}
+   \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Nunca dejar escapar una excepci\'on. En C++ causan un crash.
+\item En todo el c\'odigo deber\'ian haber apenas unos pocos \lstinline[style=normal]!try-catch!. Uno de los lugares en donde deber\'ian estar es en el \lstinline[style=normal]!main! para atrapar y logguear cualquier excepci\'on antes de que escape del \lstinline[style=normal]!main! y hagan crashear el programa.
+}
+
+% Solo quiero 3 secciones, \section*{Resumen}
+\begin{frame}[fragile]{Resumen}
+   \beamerdefaultoverlayspecification{<+->}
+   \begin{itemize}
+      \item RAII + Objetos en el Stack == (casi) \alert{ning\'un leak} y no hay necesidad de \lstinline[style=normal]!try/catch! para liberar recursos. Mantener a los objetos consistentes.
+      \item RAII + Buena Interfaz == Chequeos (al estilo pesimista) en un \alert{solo lugar} (no hay que repetirlos). Quien use esos objetos puede asumir que todo va a salir bien (mirada optimista).
+      \item Chequeos + Excepciones con info + Loggueo a un archivo (Los errores no se silencian, sino que se detectan, propagan y registran) == El debuggeo es \alert{m\'as f\'acil}.
+      \item Clases de Errores: Usar las que tiene el est\'andar C++. Crear las propias pero s\'olo si hacen falta.
+      \item \lstinline[style=normal]!try/catch!: Deber\'ian haber pocos. En el \lstinline[style=normal]!main! y tal vez en alg\'un constructor en particular.
+   \end{itemize}
+\end{frame}
+
+\appendix
+\section<presentation>*{\appendixname}
+\subsection<presentation>*{Referencias}
+
+\begin{frame}[allowframebreaks]
+   \frametitle<presentation>{Referencias}
+
+   \begin{thebibliography}{10}
+
+         \beamertemplatebookbibitems
+         % Start with overview books.
+
+      \bibitem{Sutter}
+         Herb Sutter.
+         \newblock {\em Exceptional C++: 47 Engineering Puzzles}.
+         \newblock Addison Wesley, 1999.
+
+      \bibitem{Stroustrup}
+         Bjarne Stroustrup.
+         \newblock {\em The C++ Programming Language}.
+         \newblock Addison Wesley, Fourth Edition.
+
+         \beamertemplatearticlebibitems
+
+      \bibitem{man page: syslog}
+         man page: syslog
+
+         % Followed by interesting articles. Keep the list short.
+
+   \end{thebibliography}
+\end{frame}
+~% endmacro %~
+
+~{ content() }~
+
+\end{document}
+
+

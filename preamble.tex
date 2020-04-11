@@ -1,34 +1,18 @@
 \pdfminorversion=4
 
-% Modos:
-% Definir el comando \handoutmode como "1" para compilar las diapositivas en
-% modo handout
-% al pdf generado ejecutarle el siguiente comando para poner varias diapo en una misma pagina:
-%    pdfnup FILE.pdf --nup 2x3 --no-landscape --paper letterpaper --frame True
-%
-% Definir \handoutmode como algo distinto de "1" para compilar las diapositivas
-% normalmente.
-%
-% Definir \pptsupportmode como "1" para activar el soporte de PPTs, algo
-% distinto para compilar las diapositivas normalmente
-%
-% Para configurar el modo desde afuera (la linea de comandos de latex) correr
-% la compilacion como:
-%
-%   latex -output-directory=tmp -output-format=pdf '\def\handoutmode{1}\def\pptsupportmode{1}\include{FILE.tex}'
-%
-\if\handoutmode1
+~% if handout is on %~
     \documentclass[professionalfonts,handout]{beamer}
     \setbeameroption{show notes}
     \setbeamertemplate{note page}{\insertnote}
     \setbeamercolor{background canvas}{bg=white}
-\else
-    \documentclass[professionalfonts]{beamer}
-\fi
+~% else %~
+    ~% if interactive is on %~
+        \documentclass[professionalfonts,handout]{beamer}
+    ~% else %~
+        \documentclass[professionalfonts]{beamer}
+    ~% endif %~
+~% endif %~
 
-\if\pptsupportmode1
-    \setbeamercolor{background canvas}{bg=white}
-\fi
 
 
 % Template original the Beamer: Copyright 2004 by Till Tantau <tantau@users.sourceforge.net>.
@@ -70,7 +54,7 @@
    commentstyle=\color{darkgreen},          % color de los comentarios
    basicstyle=\color{black}\ttfamily\footnotesize\bfseries,     % color del texto en general
    morecomment=[l][\color{magenta}]{\#},    % coloreamos las intrucciones del precompilador (todo lo que empieza con #)
-   ndkeywords={NULL,nullptr,siz,zer,mov,add},               % definimos una nuevas keywords como NULL y nullptr
+   ndkeywords={NULL,nullptr,siz,zer,mov,add,noexcept},               % definimos una nuevas keywords como NULL y nullptr
    ndkeywordstyle=\color{violet},           % y las nuevas keywords tendran este color
    frame=simple,                            % simple, sin ningun marco o frame alrededor del codigo
    basewidth={0.55em,0.55em}                % tamano de las letras/lineas. usado para reducir el whitespace entre estas
@@ -255,11 +239,7 @@
 % sin fecha
 \date{}
 
-\if\pptsupportmode1
-% no author in ppt mode, let others to put its name
-\else
-    \author[7542-9508]{Di Paola Mart\'in \\ \texttt{martinp.dipaola <at> gmail.com} }
-\fi
+\author[7542-9508]{Di Paola Mart\'in \\ \texttt{martinp.dipaola <at> gmail.com} }
 
 \institute[Universidad de Buenos Aires]
 {
@@ -280,11 +260,16 @@
 
 
 %%%%%
-% At begin of each Section do nothing; at each Subsection show the Section and Subsection names
-% If the Section doesn't have a Subsection, then YOU must to add a unnumbered Subsection like \subsection*{}
-% so the AtBeginSubsection will get triggered
-\AtBeginSection{}
-\AtBeginSubsection[\frame{\subsectionpage}]{\frame{\subsectionpage}}
+~% if interactive is on %~
+    \AtBeginSection{}
+    \AtBeginSubsection{}
+~% else %~
+    % At begin of each Section do nothing; at each Subsection show the Section and Subsection names
+    % If the Section doesn't have a Subsection, then YOU must to add a unnumbered Subsection like \subsection*{}
+    % so the AtBeginSubsection will get triggered
+    \AtBeginSection{}
+    \AtBeginSubsection[\frame{\subsectionpage}]{\frame{\subsectionpage}}
+~% endif %~
 %
 %%%%%
 

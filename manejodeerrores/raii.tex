@@ -1,0 +1,339 @@
+\input{../preamble-tmp.tex}
+
+\title%
+{Manejo de Recursos - RAII}
+
+
+\subject{Manejo de Recursos - RAII}
+
+
+\begin{document}
+
+\begin{frame}
+   \titlepage
+\end{frame}
+
+~% if interactive is off %~
+\begin{frame}{De qu\'e va esto?}
+   \tableofcontents
+   % You might wish to add the option [pausesections]
+\end{frame}
+~% endif %~
+
+
+~% macro content() %~
+\section{Manejo de Recursos}
+\subsection{Motivaci\'on}
+\begin{frame}[fragile]{El camino fel\'iz: mirada optimista pero ingenua}
+   \begin{lstlisting}[style=normal]
+void process() {
+   char *buf = (char*) malloc(sizeof(char)*20);
+
+   FILE *f = fopen("data.txt", "rt");
+
+   fread(buf, sizeof(char), 20, f);
+
+   /* ... */
+
+   fclose(f);
+   free(buf);
+}
+   \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item C\'odigo simple pero sin chequeos. Un peligro!
+\item Ignorar un error puede hacer que el programa crashee o se comporte de forma indefinida. Y lo que es peor, el crash se va a producir en un lugar distanciado de donde realmente hubo un error lo que lo hace mucho mas dif\'icil de debuggear.
+}
+
+~% if interactive is off %~
+\begin{frame}[fragile]{Contemplando el camino menos fel\'iz}
+   \begin{lstlisting}[style=normal]
+int process() {
+   char *buf = (char*) malloc(sizeof(char)*20);
+
+   FILE *f = fopen("data.txt", "rt");
+
+   if(f == nullptr) {
+      free(buf);
+      return -1;
+   }
+
+   fread(buf, sizeof(char), 20, f);
+
+   /* ... */
+   fclose(f);
+   free(buf);
+}
+   \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Para evitar que los errores pasen desapercibidos, hay que chequear y hay que hacerlo lo antes posible. Jam\'as se debe dejar que un error se propague ya que al final tendremos un programa err\'atico muy dif\'icil de debuggear.
+\item Por cada chequeo hay que manualmente liberar los recursos anteriores.
+\item Para que el caller sepa que sucedio, hay que retornar un c\'odigo de error.
+}
+~% endif %~
+
+\begin{frame}[fragile]{Mas robusto, pero poco fel\'iz: una mirada pesimista}
+   \begin{lstlisting}[style=normal]
+int process() {
+   char *buf = (char*) malloc(sizeof(char)*20);
+   if(buf == nullptr) { return -1; }
+
+   FILE *f = fopen("data.txt", "rt");
+   if(f == nullptr) { free(buf); return -2; }
+
+   int n = fread(buf, sizeof(char), 20, f);
+   if(n < 0) { free(buf); fclose(f);  return -3; }
+
+   /* ... */
+   int s = fclose(f);
+   if(s != 0) { free(buf); return -4; }
+
+   free(buf);
+}
+   \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Al final, tantos chequeos hacen engorrozo un c\'odigo que era sencillo
+\item En C se usan otras estrategias. En C++ se usan Excepciones
+}
+
+\subsection{Excepciones y su Mal Uso}
+\begin{frame}[fragile]{Las excepciones no implican un buen manejo de errores}
+   \begin{lstlisting}[style=normal,linebackgroundcolor={%
+         \only<1>{\def\lst@linebgrdcmd####1####2####3{}}%
+         \btLstHLB<2>{4,7,10,13}%
+         \btLstHLB<3>{14}%
+         \btLstHLB<4>{3-10,15-17}%
+         \btLstHLB<5>{3-7,15-17}%
+   }]
+void process() {
+   try {
+      char *buf = (char*) malloc(sizeof(char)*20);
+      if(buf == nullptr) { throw -1; }
+
+      FILE *f = fopen("data.txt", "rt");
+      if(f == nullptr) { throw -2; }
+
+      int n = fread(buf, sizeof(char), 20, f);
+      if(n < 0) { throw -3; }
+
+      int s = fclose(f);
+      if(s != 0) { throw -4; }
+   } catch(...) {
+      free(buf);
+      fclose(f);
+      throw;  // re lanza la excepcion
+   }
+   \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Lanzamos una excepci\'on con la instrucci\'on \lstinline[style=normal]!throw!
+\item En un primer approach, las excepciones nos evitan tener que retornar c\'odigos de error
+\item Usando \lstinline[style=normal]!try-catch! atrapamos las excepciones para centralizar la liberaci\'on de los recursos
+\item Una vez hecho esto, la instrucci\'on \lstinline[style=normal]!throw! dentro de un \lstinline[style=normal]!catch! relanza la excepcion atrapada asi quien nos llam\'o (el caller de la funci\'on \lstinline[style=normal]!process!) sabe que algo sali\'o mal.
+\item \alert{Y el c\'odigo queda cada vez peor!!} Este es un ejemplo de un \alert{mal manejo de los errores}: el uso de excepciones no garantiza un buen manejo de los errores.
+\item El c\'odigo es tan complejo que estoy liberando un recurso sin antes haberlo adquirido y encima tengo un leak!!
+}
+
+
+\subsection{RAII: Recursos Bien Manejados}
+\begin{frame}[fragile]{RAII: Resource Acquisition Is Initialization}
+   \begin{lstlisting}[style=normal]
+class Buffer{
+   char *buf;
+
+   public:
+   Buffer(size_t count) : buf(nullptr) {
+      buf = (char*) malloc(sizeof(char)*count);
+      if (!buf) { throw -1; }
+   }
+
+   /* ... */
+
+   ~Buffer() noexcept {
+      free(buf); //No pregunto si es nullptr o no!
+   }
+};
+   \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Todo recurso debe ser encapsulado en una clase
+\item El constructor se encarga de adquirirlo y el destructor de liberarlo
+\item Si durante la construcci\'on del objeto algo sale mal, lanzar un excepci\'on.
+\item Aplicable a Sockets, Buffers, Files, Mutexs, Locks, etc...
+}
+
+\begin{frame}[fragile]{RAII y la vuelta al camino fel\'iz}
+   \begin{lstlisting}[style=normal,linebackgroundcolor={%
+         \only<1>{\def\lst@linebgrdcmd####1####2####3{}}%
+         \btLstHLB<2>{2-6,11}%
+         \btLstHLB<3>{2-4,11}%
+   }]
+void process() {
+   Buffer buf(20);
+
+   File f("data.txt", "rt");
+
+   f.read(buf->raw_ptr(), sizeof(char), 20);
+
+   /* ... */
+
+   f.close();
+} // Destruyo los objetos creados
+   \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item C\'odigo simple pero con chequeos ocultos en cada objeto RAII
+\item Si hay un error, se lanza una excepci\'on. Los errores no se silencian. Se hacen todos los chequeos en un solo lugar: la clase que encapsula al recurso.
+\item Al salir del scope, por proceso normal o por excepci\'on, los objetos construidos son destruidos mientras que los objetos que no fueron construidos no se destruyen: no hay leaks ni tampoco \lstinline[style=normal]!free!(s) de objetos sin alocar.
+\item Es importante resaltar esto: los objetos RAII deben adquirir los recursos en sus constructores y destruirlos en sus destructores y cada objeto RAII debe hacerse cargo del recurso que encapsula, si algo sale mal, lanzar una excepci\'on.
+}
+
+\begin{frame}[fragile]{Si el constructor falla, el destructor no se invoca.}
+   \begin{lstlisting}[style=normal]
+class DoubleBuffer {
+   char *bufA;
+   char *bufB;
+   /* ... */
+
+   DoubleBuffer(size_t count) : bufA(nullptr), bufB(nullptr) {
+      bufA = (char*) malloc(sizeof(char)*count);
+      bufB = (char*) malloc(sizeof(char)*count);
+
+      if(!bufA || !bufB) throw -1; // Leak!
+   }
+
+   ~DoubleBuffer() noexcept {
+      free(bufA);
+      free(bufB);
+   }
+   \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item El destructor se llama sobre objetos bien construidos. Si hay una excepci\'on en el constructor de \lstinline[style=normal]!DoubleBuffer!, C++ va a considerar que el objeto no fue construido y por ende no debe destruirse asi que no se le llamara a su destructor. Es importante escribir los constructores con sumo cuidado.
+\item Para evitar problemas, revisar dos veces la implementaci\'on de los constructores
+}
+
+\begin{frame}[fragile]{RAII over RAII}{}
+   \begin{lstlisting}[style=normal]
+class DoubleBuffer {
+   Buffer bufA;   // No son punteros, ese es el truco!
+   Buffer bufB;
+   /* ... */
+
+   DoubleBuffer(size_t count) : bufA(count), bufB(count) {
+   }  //Constructor simple, sin try-catch
+
+   ~DoubleBuffer() noexcept {
+   }
+   \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Al usar objetos RAII como atributos de otros objetos (y no punteros a...), los destructores se llaman autom\'aticamente sobre los objetos creados
+\item Si el primer \lstinline[style=normal]!Buffer! (\lstinline[style=normal]!bufA!) se creo pero el segundo fall\'o, solo el destructor de \lstinline[style=normal]!bufA! se va a llamar.
+}
+
+\begin{frame}[fragile]{RAII - Ejemplos}
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+        \begin{lstlisting}[style=normal]
+std::list<Msg*> history;
+// ...
+history.push_back(new Msg(""));
+history.push_back(new Msg(""));
+// ...
+for (auto& ptr : history)
+  delete ptr;
+        \end{lstlisting}
+      \end{column}
+      \begin{column}{.4\linewidth}
+         \begin{lstlisting}[style=normal]
+MsgList history;
+// ...
+history.append(new Msg(""));
+history.append(new Msg(""));
+// ...
+
+// ~MsgList::MsgList
+        \end{lstlisting}
+      \end{column}
+   \end{columns}
+\end{frame}
+
+\begin{frame}[fragile]{RAII - Ejemplos}
+   \begin{lstlisting}[style=normal]
+class Socket {
+   public:
+      Socket(/*...*/) {
+         this->fd = socket(AF_INET, SOCK_STREAM, 0);
+         if (this->fd == -1)
+            throw OSError("The socket cannot be created.");
+      }
+
+      ~Socket() noexcept {
+         close(this->fd);
+      }
+};
+   \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{RAII - Ejemplos}
+   \begin{lstlisting}[style=normal]
+class Lock {
+   Mutex &mutex;
+
+   public:
+      Lock(Mutex &mutex) : mutex(mutex) {
+         mutex.lock();
+      }
+
+      ~Lock() noexcept {
+         mutex.unlock();
+      }
+   \end{lstlisting}
+~% if interactive is off %~
+   \begin{columns}
+      \begin{column}{.5\linewidth}
+         \begin{lstlisting}[style=normal]
+void change_shared_data() {
+   this->mutex.lock();
+   /* ... */
+   this->mutex.unlock();
+}
+         \end{lstlisting}
+      \end{column}
+      \begin{column}{.4\linewidth}
+         \begin{lstlisting}[style=normal]
+void change_shared_data() {
+   Lock lock(this->mutex);
+   /* ... */
+
+}
+         \end{lstlisting}
+      \end{column}
+   \end{columns}
+~% endif %~
+\end{frame}
+
+
+~% if interactive is off %~
+\begin{frame}[fragile]{RAII - Resumen}
+   \begin{itemize}
+      \item Los recursos deben ser encapsulados en objetos, adquiriendolos en el constructor y liberandolos en el destructor.
+      \item Hacer uso del stack. Los objetos del stack son siempre destruidos al final del scope llamando a su destructor.
+      \item Los objetos que encapsulan recursos deben detectar condiciones an\'omalas y lanzar una excepci\'on.
+      \item Pero \alert{jam\'as} lanzar una excepci\'on en un destructor. (Condici\'on \lstinline[style=normal]!noexcept!)
+      \item Una excepci\'on en un constructor hace que el objeto no se cree (y su destructor no se llamara). Liberar sus recursos \alert{a mano} antes de salir del constructor.
+      \item Cuidado con copiar objetos RAII. En general es mejor hacerlos no-copiables y movibles.
+   \end{itemize}
+\end{frame}
+~% endif %~
+
+~% endmacro %~
+
+~{ content() }~
+
+\end{document}
+
+
