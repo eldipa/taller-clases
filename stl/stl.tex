@@ -275,7 +275,7 @@ lista.swap(tmp);
 Mucho mejor!:
    \begin{lstlisting}[style=normal]
 bool es_par(const int &i) { return i % 2 == 0; }
-std::remove_if(lista.begin(), lista.end(), es_par);
+lista.remove_if(es_par);
    \end{lstlisting}
 \end{frame}
 \note[itemize] {
