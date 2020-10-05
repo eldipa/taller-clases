@@ -1,0 +1,98 @@
+\input{../preamble-tmp.tex}
+
+\title%
+{Memoria en C/C++ - Errores de Memoria}
+
+
+\subject{Memoria en C/C++ - Errores de Memoria}
+
+
+\begin{document}
+
+\begin{frame}
+   \titlepage
+\end{frame}
+
+~% if interactive is off %~
+\begin{frame}{De qu\'e va esto?}
+   \tableofcontents
+   % You might wish to add the option [pausesections]
+\end{frame}
+~% endif %~
+
+~% macro content() %~
+\section{Buffer overflows}
+\subsection*{}
+\begin{frame}[fragile]{Smash the stack for fun and profit}
+         \begin{lstlisting}[style=normal]
+// compilar con el flag -fno-stack-protector
+#include <stdio.h>
+
+int main(int argc, char *argv[]) {
+    int cookie = 0;
+    char buf[10];
+
+    printf("buf: %08x cookie: %08x\n", buf, &cookie);
+    gets(buf);
+
+    if (cookie == 0x41424344) {
+        printf("You win!\n");
+    }
+
+    return 0;
+} // Insecure Programming
+         \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Es claro que al inicializar \lstinline[style=normal]!cookie! a cero nunca se va a imprimir \lstinline[style=normal]?"You win!"?... o si?
+\item \lstinline[style=normal]!gets! lee de la entrada est\'andar hasta encontrar un \lstinline[style=normal]!'\\n'! y lo que leea lo escribira en el buffer \lstinline[style=normal]!buf!. Pero si el input es m\'as grande que el buffer, \lstinline[style=normal]!gets! escribira por fuera de este y sobreescribira todo el stack lo que se conoce como Buffer Overflow.
+\item Para hacer que el programa entre al \lstinline[style=normal]!if! e imprima \lstinline[style=normal]?"You win!"? se debe forzar a un buffer overflow con un input crafteado:
+\item Debe tener 10 bytes de m\'inima para ocupar el buffer \lstinline[style=normal]!buf!.
+\item Posiblemente deba tener algunos bytes adicionales para ocupar el posible espacio de padding usado para alinear las variables.
+\item Luego se debe escribir los 4 bytes que sobreescribiran \lstinline[style=normal]!cookie! pero cuidado, dependiendo de la arquitectura y flags del compilador \lstinline[style=normal]!sizeof(int)! puede no ser 4.
+\item Suponiendo que sean 4 bytes, hay que escribir el n\'umero \lstinline[style=normal]!0x41424344! byte a byte y el orden dependera del endianess: \lstinline[style=normal]!"ABCD"! en big endian, \lstinline[style=normal]!"DCBA"! en little endian.
+}
+
+\begin{frame}[fragile]{Buffer overflow}{}
+   \begin{itemize}
+      \item Funciones inseguras que no ponen un l\'imite en el tama\~no del buffer que usan. No usarlas!
+         \begin{lstlisting}[style=normal]
+gets(buf);
+strcpy(dst, src);
+         \end{lstlisting}
+
+     \item Reemplazarlas por funciones que s\'i permiten definir un l\'imite, pero es responsabilidad del programador poner un valor coherente! 
+         \begin{lstlisting}[style=normal]
+getline(buf, max_buf_size, stream);
+strncpy(dst, src, max_dst_size);
+         \end{lstlisting}
+   \end{itemize}
+\end{frame}
+\begin{frame}[fragile]{Challenge: hacer que el programa imprima "You win!"}
+         \begin{lstlisting}[style=normal]
+// compilar con el flag -fno-stack-protector
+#include <stdio.h>
+
+int main(int argc, char *argv[]) {
+    int cookie = 0;
+    char buf[10];
+
+    printf("buf: %08x cookie: %08x\n", buf, &cookie);
+    gets(buf);
+
+    if (cookie == 0x41424344) {
+        printf("You loose!\n");
+    }
+
+    return 0;
+} // Insecure Programming
+         \end{lstlisting}
+\end{frame}
+
+~% endmacro %~
+
+~{ content() }~
+
+\end{document}
+
+

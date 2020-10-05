@@ -1,0 +1,227 @@
+\input{../preamble-tmp.tex}
+
+\title%
+{Memoria en C/C++ - Punteros}
+
+
+\subject{Memoria en C/C++ - Punteros}
+
+
+\begin{document}
+
+\begin{frame}
+   \titlepage
+\end{frame}
+
+~% if interactive is off %~
+\begin{frame}{De qu\'e va esto?}
+   \tableofcontents
+   % You might wish to add the option [pausesections]
+\end{frame}
+~% endif %~
+
+~% macro content() %~
+\section{Punteros}
+% simples
+\begin{frame}[fragile]{Punteros}
+         \begin{lstlisting}[style=normal]
+int *p;    // p es un puntero a int
+           // (p guarda la direccion de un int)
+
+int i = 1;
+p = &i;    // &i es la direccion de la variable i
+
+*p = 2;    // *p dereferencia o accede a la memoria
+           // cuya direccion esta guardada en p
+
+/* i == 2 */
+
+         \end{lstlisting}
+         \begin{lstlisting}[style=normal]
+
+char buf[512];
+write(&buf[0], 512);
+
+         \end{lstlisting}
+\end{frame}
+
+% aritmetica de punteros
+\begin{frame}[fragile]{Aritm\'etica de punteros}
+         \begin{lstlisting}[style=normal]
+int a[10];
+int *p;
+
+p = &a[0];
+
+*p       // a[0]
+*(p+1)   // a[1]
+
+
+int *p;
+p+1      // movete sizeof(int) bytes (4)
+
+char *c;
+c+2      // movete 2*sizeof(char) bytes (2)
+
+         \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item La notaci\'on de array (indexado) y la aritm\'etica de punteros son escencialmente lo mismo.
+\item La aritm\'etica de punteros se basa en el tama\~no de los objetos a los que se apunta al igual que el indexado de un array.
+}
+
+% punteros a funcion
+\begin{frame}[fragile]{Punteros a funciones (al code segment)}
+         \begin{lstlisting}[style=normal]
+int g(char) {}
+
+int (*p)(char);
+p = &g;
+         \end{lstlisting}
+\pause
+         \begin{lstlisting}[style=normal]
+#include <stdlib.h>
+void qsort(void *base,
+           size_t nmemb,
+           size_t size,
+
+           int (*cmp)(const void *, const void *)
+          );
+
+int cmp_personas(const void* a, const void* b) {
+    struct Persona *pa = (struct Persona*)a;
+    struct Persona *pb = (struct Persona*)b;
+
+    return pa->edad - pb->edad;
+}
+
+         \end{lstlisting}
+\end{frame}
+
+
+~% if interactive is off %~
+\begin{frame}[fragile]{Como leer la bizarra notaci\'on de punteros en C/C++}
+         \begin{lstlisting}[style=dimmided]
+@/* Ejemplo 1 */
+char *a[10];@@
+      a        // "a"
+     *a        // "a" apunta a
+char *a        // "a" apunta a char
+char *a[10];   // "a" apunta a char (10 de esos)
+
+char *a[10];   // "a" es un array de 10 de esos, o sea
+               // "a" es un array de 10 punteros a char
+@
+         \end{lstlisting}
+\end{frame}
+~% else %~
+\begin{frame}[fragile,t]{Como leer la bizarra notaci\'on de punteros en C/C++}
+         \begin{lstlisting}[style=normal]
+/* Ejemplo 1 */
+char *a[10];
+         \end{lstlisting}
+\end{frame}
+~% endif %~
+
+
+~% if interactive is off %~
+\begin{frame}[fragile]{Como leer la bizarra notaci\'on de punteros en C/C++}
+         \begin{lstlisting}[style=dimmided]
+@/* Ejemplo 2 */
+char (*c)[10];@@
+       c       // "c"
+      *c       // "c" apunta a
+     (*c) == X // llamemos "X" a (*c) temporalmente
+@@
+char X[10];
+char X[10];    // "X" es un char (10 de esos)
+
+char X[10];    // "X" es un array de 10 char
+@@char (*c)[10]; // "c" apunta a un array de 10 char
+@
+         \end{lstlisting}
+\end{frame}
+~% else %~
+\begin{frame}[fragile,t]{Como leer la bizarra notaci\'on de punteros en C/C++}
+         \begin{lstlisting}[style=normal]
+/* Ejemplo 2 */
+char (*c)[10];
+         \end{lstlisting}
+\end{frame}
+~% endif %~
+
+
+~% if interactive is off %~
+\begin{frame}[fragile]{Como leer la bizarra notaci\'on de punteros en C/C++}
+         \begin{lstlisting}[style=dimmided]
+@/* Ejemplo 3: modo dios */
+char (*f)(int)[10];@@
+       f            // "f"
+      *f            // "f" apunta a
+     (*f) == X
+@@
+char X(int)[10];@@
+char X(int)         // es la firma de una funcion,
+                    // asi que vuelvo un paso para atras
+char (*f)(int)      // entonces esto es un puntero a funcion
+                    // cuya firma recibe un int y retorna
+                    // un char
+@@
+char (*f)(int)[10]; // puntero a funcion, 10 de esos
+char (*f)(int)[10]; // f es un array de 10 punteros a funcion,
+                    // que reciben un int y retornan un chars
+@
+         \end{lstlisting}
+\end{frame}
+~% else %~
+\begin{frame}[fragile,t]{Como leer la bizarra notaci\'on de punteros en C/C++}
+         \begin{lstlisting}[style=normal]
+/* Ejemplo 3 */
+char (*f)(int)[10];
+         \end{lstlisting}
+\end{frame}
+~% endif %~
+
+
+% typedef
+\begin{frame}[fragile]{Simplificando la notaci\'on}{}
+         \begin{lstlisting}[style=normal]
+        char *X[10];   // la variable "X" es un array de
+                       // 10 punteros a char
+
+         \end{lstlisting}
+         \begin{lstlisting}[style=normal]
+typedef char *X[10];   // el tipo "X" es un array de
+                       // 10 punteros a char
+
+X my_array;            // es una alias, decir "X" es como decir
+char *my_array[10];    // "array de 10 punteros a char"
+
+         \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Simplificando la notaci\'on}{}
+Si quiero una variable que sea un array de punteros a funci\'on que no reciban ni retornen nada?
+         \begin{lstlisting}[style=normal]
+        void (*X)();   // la variable "X" es un puntero a
+                       // funcion
+
+         \end{lstlisting}
+         \begin{lstlisting}[style=normal]
+typedef void (*X)();   // el tipo "X" es un puntero a
+                       // funcion
+
+X f[10];               // f es una array de 10 X, entonces
+                       // f es una array de 10 punteros
+                       // a funcion
+         \end{lstlisting}
+\end{frame}
+
+~% endmacro %~
+
+~{ content() }~
+
+
+\end{document}
+
+
