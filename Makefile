@@ -18,7 +18,7 @@
 #
 
 TMP=tmp
-COMPRESS_LEVEL=screen
+COMPRESS_LEVEL=ebook
 
 COMPILE_FLAGS=-output-directory=${TMP} -output-format=pdf
 GS_FLAGS=-sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -r150 -dPDFSETTINGS=/${COMPRESS_LEVEL} -dNOPAUSE -dQUIET -dBATCH
