@@ -9,20 +9,13 @@
 
 \begin{document}
 
-\begin{frame}
+\begin{frame}[noframenumbering,plain]
    \titlepage
 \end{frame}
 
-~% if interactive is off %~
-\begin{frame}{De qu\'e va esto?}
-   \tableofcontents
-   % You might wish to add the option [pausesections]
-\end{frame}
-~% endif %~
 
 ~% macro content() %~
 \section{Buffer overflows}
-\subsection*{}
 \begin{frame}[fragile]{Smash the stack for fun and profit}
          \begin{lstlisting}[style=normal]
 // compilar con el flag -fno-stack-protector
