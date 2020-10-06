@@ -1,0 +1,94 @@
+
+%diferencia entre texto y binario
+%bin / text
+%prefix / delim
+\input{../preamble-tmp.tex}
+
+\title%
+{Sockets TCP/IP en C - Protocolos}
+
+
+\subject{Sockets TCP/IP en C - Protocolos}
+
+
+\begin{document}
+
+\begin{frame}[noframenumbering,plain]
+   \titlepage
+\end{frame}
+
+~% if interactive is off %~
+\begin{frame}{De qu\'e va esto?}
+   \tableofcontents
+   % You might wish to add the option [pausesections]
+\end{frame}
+~% endif %~
+
+
+~% macro content() %~
+\section{Protocolos y formatos}
+\subsection*{}
+\begin{frame}[fragile]{Binario o Texto}
+    \begin{itemize}
+        \item Protocolos en Texto: son la contracara de los protocolos binarios, son lentos, ineficientes y m\'as dif\'iciles de parsear pero m\'as f\'aciles de debuggear. Son independientes del endianess, padding y otros pero dependen del encoding del texto y que caracteres se usan como delimitadores.
+        \item Protocolos en Binario: son simples y eficientes en terminos de memoria y velocidad de procesamiento. Son m\'as dif\'iciles de debuggear. Es necesario tomar en consideraci\'on el endianess, el padding, los tama\~nos y los signos.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{HTTP}
+    \begin{lstlisting}[style=normalhttp]
+GET /index.html HTTP/1.1\r\n
+Host: www.fi.uba.ar\r\n
+\r\n
+    \end{lstlisting}
+~% if interactive is off %~
+    \begin{itemize}
+        \item En HTTP el fin del mensaje esta dado por una l\'inea vacia; cada l\'inea esta delimitada por un \lstinline[style=normalhttp]!\r\n!
+        \item Cuantos bytes reservar\'ian para contener dicho mensaje o alguna l\'inea?
+        \item Que pasa si el delimitador \lstinline[style=normalhttp]!\r\n! aparece en el medio de una l\'inea, como lo diferenciar\'ian?
+    \end{itemize}
+~% endif %~
+\end{frame}
+\note[itemize] {
+\item Habitualmente en protocolos en texto se usa uno o una secuencia de caracteres como delimitadores.
+\item En la cabezera de HTTP se usa \lstinline[style=normal]!\\r\\n!
+\item En C/C++, los fin de strings son marcados con \lstinline[style=normal]!\\0!
+\item Aunque simple, no es trivial saber cuantos bytes hay hasta el delimitador.
+\item Tampoco es trivial el caso de que el texto contenga al delimitador meramente por que es parte de su contenido.
+\item Hay dos opciones, o se opta por otro protocolo o se usa una secuencia de escape para que el delimitador sea considerado un literal y no un delimitador.
+\item Y si la secuencia de escape es parte del contenido? Hay que escapear la secuencia de escape con otra secuencia de escape.
+\item Por ejemplo, el compilador de C/C++ ve \lstinline[style=normal]!"\\1"! como un string con el byte 1 (a pesar de haber 2 caracteres). Si se quisiera literalmente poner una barra y un 1 hay que escapear la barra: \lstinline[style=normal]!"\\\\1"!
+}
+
+\begin{frame}[fragile]{TLV}
+    \begin{lstlisting}[style=normal]
+struct Msj {
+    unsigned short type;
+    unsigned short length;
+    char* value;
+};
+
+read(fd, &msj.type, sizeof(unsigned short) * 2);
+msj.value = (char*) malloc(msj.length);
+read(fd, msj.value, msj.length);
+    \end{lstlisting}
+~% if interactive is off %~
+    \begin{itemize}
+        \item Los primeros 4 bytes indican la longitud y tipo del valor; el resto de los bytes son el valor en s\'i.
+        \item Por qu\'e es importante usar \lstinline[style=normal]!unsigned short! y no solamente \lstinline[style=normal]!short!? Qu\'e pasa si \lstinline[style=normal]!sizeof(unsigned short)! no es 2?
+        \item Que pasa si el endianess no coincide? y si hay padding entre los dos primeros campos?
+    \end{itemize}
+~% endif %~
+\end{frame}
+\note[itemize] {
+\item Prefijar la longitud del mensaje soluciona varios problemas pero trae otros.
+\item Si \lstinline[style=normal]!sizeof(unsigned short)! vale 4 estar\'iamos enviando 8 bytes con las longitud y tipo pero la m\'aquina que recibe el mensaje puede esperar 4.
+\item Hay que definir y forzar un endianess y reglas de padding.
+}
+
+
+~% endmacro %~
+
+~{ content() }~
+
+\end{document}

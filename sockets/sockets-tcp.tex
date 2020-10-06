@@ -1,0 +1,333 @@
+\input{../preamble-tmp.tex}
+
+\title%
+{Sockets TCP/IP en C - Sockets}
+
+
+\subject{Sockets TCP/IP en C - Sockets}
+
+
+\begin{document}
+
+\begin{frame}[noframenumbering,plain]
+   \titlepage
+\end{frame}
+
+~% if interactive is off %~
+\begin{frame}{De qu\'e va esto?}
+   \tableofcontents
+   % You might wish to add the option [pausesections]
+\end{frame}
+~% endif %~
+
+
+~% macro content() %~
+
+~% if interactive is on %~
+\section{}
+\begin{frame}{Canal de comunicaci\'on TCP}
+\end{frame}
+~% endif %~
+
+
+~% if interactive is off %~
+\section{Resoluci\'on de nombres}
+\subsection*{}
+\begin{frame}{Resoluci\'on de nombres: desde donde quiero escuchar}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0002.pdf}
+        };
+    \end{tikzpicture}
+ \end{frame}
+\note[itemize] {
+\item El servidor tiene que definir desde donde quiere recibir las conexiones.
+\item Hay m\'as esquemas posibles pero solo nos interesa definir la IP y el puerto del servidor.
+\item Sin embargo, hardcodear la IP y/o el puerto es una mala pr\'actica. Mejor es usar nombres simb\'olicos: host name y service name.
+\item La funci\'on \lstinline[style=normal]!getaddrinfo! se encargara de resolver esos nombres y llevarlos a IPs y puertos.
+}
+
+\begin{frame}{Resoluci\'on de nombres: a quien me quiero conectar}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0003.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+~% endif %~
+
+
+\begin{frame}[fragile]{Resoluci\'on de nombres}
+    Cliente
+      \begin{lstlisting}[style=normal]
+memset(&hints, 0, sizeof(struct addrinfo));
+hints.ai_family   = AF_INET;      /* IPv4  */
+hints.ai_socktype = SOCK_STREAM;  /* TCP   */
+hints.ai_flags    = 0;
+
+status = getaddrinfo("fi.uba.ar", "http", &hints, &results);
+      \end{lstlisting}
+    Servidor
+      \begin{lstlisting}[style=normal]
+memset(&hints, 0, sizeof(struct addrinfo));
+hints.ai_family   = AF_INET;      /* IPv4  */
+hints.ai_socktype = SOCK_STREAM;  /* TCP   */
+hints.ai_flags    = AI_PASSIVE;
+
+status = getaddrinfo(0 /* ANY */, "http", &hints, &results);
+      \end{lstlisting}
+      \begin{lstlisting}[style=normal]
+freeaddrinfo(results);  // Cliente y Servidor
+      \end{lstlisting}
+\end{frame}
+
+
+~% if interactive is off %~
+\section{Canal de comunicaci\'on TCP}
+\subsection{Establecimiento de un canal}
+\begin{frame}{Creaci\'on de un socket}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0004.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item Crear un socket no es nada mas que crear un file descriptor al igual que cuando abrimos un archivo.
+}
+
+
+\begin{frame}{Enlazado de un socket a una direcci\'on}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0005.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item A los sockets se los puede enlazar o atar a una direcci\'on IP y puerto local para que el sistema operativo sepa desde donde puede enviar y recibir conexiones y mensajes.
+\item El uso mas t\'ipico de \lstinline[style=normal]!bind! se da del lado del servidor cuando este dice "quiero escuchar conexiones desde mi IP p\'ublica y en este puerto".
+\item Sin embargo el cliente tambi\'en puede hacer \lstinline[style=normal]!bind! por razones un poco mas esot\'ericas.
+}
+
+\begin{frame}{Socket aceptador o pasivo}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0006.pdf}
+            \includegraphics<2>[width=\paperwidth]{overview_slides/pg_0007.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item Una vez enlazado le decimos al sistema operativo que queremos escuchar conexiones en esa IP/puerto.
+\item La funci\'on \lstinline[style=normal]!listen! define hasta cuantas conexiones en "espera de ser aceptadas" el sistema operativo puede guardar.
+\item La funci\'on \lstinline[style=normal]!listen! NO define un l\'imite de las conexiones totales (en espera + las que estan ya aceptadas). No confundir!
+\item Ahora el servidor puede esperar a que alguien quiera conectarse y aceptar la conexi\'on con la funci\'on \lstinline[style=normal]!accept!.
+\item La funci\'on \lstinline[style=normal]!accept! es bloqueante.
+}
+
+\begin{frame}{Conexi\'on con el servidor: estableciendo conexi\'on}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0008.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item El cliente usa su socket para conectarse al servidor. La operaci\'on \lstinline[style=normal]!connect! es bloqueante.
+}
+
+\begin{frame}{Conexi\'on con el servidor: aceptando la conexi\'on}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0009.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item La conexi\'on es aceptada por el servidor: la funci\'on \lstinline[style=normal]!accept! se desbloquea y retorna un nuevo socket que representa a la nueva conexi\'on.
+}
+
+\subsection{Envio y recepci\'on de datos}
+\begin{frame}{Conexi\'on establecida}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0010.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item El socket \lstinline[style=normal]!acep! sigue estando disponible para que el servidor acepte a otras conexiones en paralelo mientras antiende a sus clientes (es independiente del socket \lstinline[style=normal]!srv!)
+\item Al mismo tiempo, el socket \lstinline[style=normal]!srv! quedo asociado a esa conexi\'on en particular y le permitir\'a al servidor enviar y recibir mensajes de su cliente.
+\item Tanto el cliente como el servidor se pueden enviar y recibir mensajes (\lstinline[style=normal]!send!/\lstinline[style=normal]!recv!) entre ellos.
+\item Los mensajes/bytes enviados con \lstinline[style=normal]!cli.send! son recibidos por el servidor con \lstinline[style=normal]!srv.recv!.
+\item De igual modo el cliente recibe con \lstinline[style=normal]!cli.recv! los bytes enviados por el servidor con \lstinline[style=normal]!srv.send!.
+}
+
+\begin{frame}{Envio y recepci\'on de datos}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0011.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item El par \lstinline[style=normal]!cli.send!--\lstinline[style=normal]!srv.recv! forma un canal en una direcci\'on mientras que el par \lstinline[style=normal]!srv.send!--\lstinline[style=normal]!cli-recv! forma otro canal en el sentido opuesto.
+\item Ambos canales son independientes. Esto se lo conoce como comunicaci\'on Full Duplex
+\item TCP garantiza que los bytes enviados llegaran en el mismo orden, sin repeticiones y sin p\'erdidas del otro lado.
+\item Otro protocolos como UDP no son tan robustos...
+}
+\begin{frame}{Envio y recepci\'on de datos en la realidad}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0012.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+\begin{frame}{Envio y recepci\'on de datos en la realidad}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0020.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item Sin embargo TCP NO garantiza que todos los bytes pasados a \lstinline[style=normal]!send! se puedan enviar en un solo intento: el programador debera hacer m\'ultiples llamadas a \lstinline[style=normal]!send!.
+\item De igual modo, no todo lo enviado sera recibido en una \'unica llamada a \lstinline[style=normal]!recv!: el programador debera hacer m\'ultiples llamadas a \lstinline[style=normal]!recv!.
+}
+
+\begin{frame}[fragile]{Envio y recepci\'on de datos}
+      \begin{lstlisting}[style=normal]
+int s = send(skt,
+              buf,
+              bytes_to_sent,
+              flags           // MSG_NOSIGNAL
+            );
+
+int s = recv(skt,
+              buf,
+              bytes_to_recv,
+              flags           // 0
+            );
+
+  (s == -1)  // Error inesperado, ver errno
+   (s == 0)  // El socket fue cerrado
+    (s > 0)  // Ok: s bytes fueron enviados/recibidos
+      \end{lstlisting}
+\end{frame}
+~% endif %~
+
+\begin{frame}[fragile]{recvall: recepci\'on de N bytes exactos}
+      \begin{lstlisting}[style=normal]
+char buf[MSG_LEN];  // buffer donde guardar los datos
+int bytes_recv = 0;
+
+while (MSG_LEN > bytes_recv && skt_still_open) {
+  s = recv(skt, &buf[bytes_recv], MSG_LEN - bytes_recv - 1,
+                                                0);
+  if (s == -1) { // Error inesperado, ver errno
+     /* ... */
+  }
+  else if (s == 0) { // Nos cerraron el socket
+     /* ... */
+  }
+  else {
+    bytes_recv += s;
+  }
+}
+      \end{lstlisting}
+\end{frame}
+\begin{frame}[fragile]{sendall: env\'io de N bytes exactos}
+      \begin{lstlisting}[style=normal]
+char buf[MSG_LEN];    // buffer con los datos a enviar
+int bytes_sent = 0;
+
+while (MSG_LEN > bytes_sent && skt_still_open) {
+  s = send(skt, &buf[bytes_sent], MSG_LEN - bytes_sent,
+                                              MSG_NOSIGNAL);
+  if (s == -1) { // Error inesperado, ver errno
+     /* ... */
+  }
+  else if (s == 0) { // Nos cerraron el socket
+     /* ... */
+  }
+  else {
+    bytes_sent += s;
+  }
+}
+      \end{lstlisting}
+\end{frame}
+
+~% if interactive is off %~
+\subsection{Finalizaci\'on de un canal}
+\begin{frame}{Cierre de conexi\'on parcial}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0013.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Cierre de conexi\'on total}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0014.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item Parcial en un sentido (envio) \lstinline[style=normal]!SHUT_WR!
+\item Parcial en el otro sentido (recepci\'on) \lstinline[style=normal]!SHUT_RD!
+\item Total en ambos sentidos \lstinline[style=normal]!SHUT_RDWR!
+}
+
+\begin{frame}{Liberaci\'on de los recursos con close}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0015.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{Cierre y liberaci\'on del socket aceptador}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0016.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}{TIME WAIT}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\paperwidth]{overview_slides/pg_0017.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+~% endif %~
+
+\begin{frame}[fragile]{TIME WAIT -> Reuse Address}
+Si el puerto 80 esta en el estado TIME WAIT, esto termina en error (Address Already in Use):
+      \begin{lstlisting}[style=normal]
+int acep   = socket(...);
+int status = bind(acep, ...); //bind al puerto 80
+      \end{lstlisting}
+\pause
+La soluci\'on es configurar al socket aceptador para que pueda reusar la direcci\'on:
+      \begin{lstlisting}[style=normal]
+int acep   = socket(...);
+
+int val = 1;
+setsockopt(acep, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
+
+int status = bind(acep, ...); //bind al puerto 80
+      \end{lstlisting}
+\end{frame}
+
+
+
+~% endmacro %~
+
+~{ content() }~
+
+\end{document}
