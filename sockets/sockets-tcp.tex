@@ -223,7 +223,7 @@ char buf[MSG_LEN];  // buffer donde guardar los datos
 int bytes_recv = 0;
 
 while (MSG_LEN > bytes_recv && skt_still_open) {
-  s = recv(skt, &buf[bytes_recv], MSG_LEN - bytes_recv - 1,
+  s = recv(skt, &buf[bytes_recv], MSG_LEN - bytes_recv,
                                                 0);
   if (s == -1) { // Error inesperado, ver errno
      /* ... */
