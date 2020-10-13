@@ -1,0 +1,230 @@
+
+\input{../preamble-tmp.tex}
+
+\title%
+{Clases en C++ - RAII}
+
+\subject{Clases en C++ - RAII}
+
+\begin{document}
+
+\begin{frame}[noframenumbering,plain]
+   \titlepage
+\end{frame}
+
+
+~% macro content() %~
+\section{RAII: Resource Acquisition Is Initialization}
+\subsection{Constructor y destructor}
+\begin{frame}[fragile]{Constructor/destructor: manejo de recursos autom\'atico}
+                   ~% if interactive is off %~
+        \begin{lstlisting}[style=normal,firstnumber=1,linebackgroundcolor={%
+                 \btLstHLB<1>{5-8}%
+                 \btLstHLB<2>{14-16}%
+         }]~% else %~
+        \begin{lstlisting}[style=normal,firstnumber=1]~% endif %~
+struct Vector {
+  int *data;
+  int size;
+
+  Vector(int size) {  // create
+    this->data = malloc(size*sizeof(int));
+    this->size = size;
+  }
+
+  int get(int pos) {
+    return this->data[pos];
+  }
+
+  ~Vector() { // destroy
+    free(this->data);
+  }
+};
+        \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item El constructor es un c\'odigo que se ejecuta al momento de crear un nuevo objeto. C++ siempre llama a algun constructor al crear un nuevo objeto.
+\item Todos los objetos son creados por un constructor. Si un TDA no tiene un constructor, C++ crea un constructor por default.
+\item Un TDA puede tener m\'ultiples constructores (que los veremos a continuaci\'on). Sin embargo s\'olo puede haber un \'unico destructor.
+\item Un destructor es un c\'odigo que se ejecuta al momento de destuirse un objeto (cuando este se va de scope o es eliminado del heap con \lstinline[style=normal]!delete!).
+\item Todos los objetos tienen un destructor. Si un TDA no tiene un destructor, C++ crea un destructor por default.
+}
+
+\begin{frame}[fragile]{Reduciendo la probabilidad de errores}
+                   ~% if interactive is off %~
+\only<1>{Diferencia entre reservar memoria y construir un objeto}
+\only<2>{Memoria sin inicializar}
+\only<3>{Destrucci\'on autom\'atica}
+                   ~% endif %~
+   \begin{columns}[t]
+      \begin{column}{.4\linewidth}
+                   ~% if interactive is off %~
+         \begin{lstlisting}[style=normal,firstnumber=29,linebackgroundcolor={%
+                 \btLstHLB<1>{31}%
+                 \btLstHLR<2>{33,35}%
+                 \btLstHLR<3>{38}%
+         }]~% else %~
+         \begin{lstlisting}[style=normal,firstnumber=29]~% endif %~
+// En C
+void g() {
+  struct Vector v;
+
+  v.data;
+
+  vector_create(&v, 5);
+  //...
+
+}
+         \end{lstlisting}
+     \end{column}
+      \begin{column}{.4\linewidth}
+                   ~% if interactive is off %~
+         \begin{lstlisting}[style=normal,firstnumber=29,linebackgroundcolor={%
+                 \btLstHLB<1>{31}%
+                 \btLstHLB<2>{31,33}%
+                 \btLstHLB<3>{38}%
+         }]~% else %~
+         \begin{lstlisting}[style=normal,firstnumber=29]~% endif %~
+// En C ++
+void g() {
+  Vector v(5);
+
+  v.data;
+
+
+  //...
+
+}
+         \end{lstlisting}
+     \end{column}
+ \end{columns}
+\end{frame}
+\note[itemize] {
+\item Con los constructores (si estan bien escritos) no se puede usar un objeto sin inicializar.
+\item Con los destructores (si estan bien escritos, se usa RAII y usamos el stack) no vamos a tener leaks.
+\item Los destructores se llaman autom\'aticamente cuando el objeto se va de scope.
+}
+
+\begin{frame}[fragile]{Operadores new y delete}
+                   ~% if interactive is off %~
+        \begin{lstlisting}[style=normal,firstnumber=1,linebackgroundcolor={%
+                 \btLstHLB<1>{6,15}%
+         }]~% else %~
+        \begin{lstlisting}[style=normal,firstnumber=1]~% endif %~
+struct Vector {
+  int *data;
+  int size;
+
+  Vector(int size) {
+    this->data = new int[size]();
+    this->size = size;
+  }
+
+  int get(int pos) {
+    return this->data[pos];
+  }
+
+  ~Vector() {
+    delete[] this->data;
+  }
+};
+        \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Las funciones \lstinline[style=normal]!malloc! y \lstinline[style=normal]!free! reservan y liberan memoria pero no crean objetos (no llaman a los constructores ni los destruyen)
+\item El operador \lstinline[style=normal]!new! y su contraparte \lstinline[style=normal]!delete! no s\'olo manejan la memoria del heap sino que tambi\'en llaman al respectivo constructor y destructor.
+\item Para crear un array de objetos hay que usar los operadores \lstinline[style=normal]!new[]! y \lstinline[style=normal]!delete[]! y la clase a instanciar debe tener un constructor sin par\'ametros.
+\item Hay una sutil diferencia sint\'actica cuando de tipos primitivos se trata, como \lstinline[style=normal]!int! o \lstinline[style=normal]!char!. La expresi\'on \lstinline[style=normal]!new int! crea un \lstinline[style=normal]!int! sin inicializar mientras que \lstinline[style=normal]!new int()! lo inicializa a cero.
+}
+
+\subsection{Manejo de errores}
+\begin{frame}[plain,fragile]{Manejo de errores en C (madness)}
+        \begin{lstlisting}[style=normal]
+int process() {
+  char *buf = malloc(sizeof(char)*20);
+
+  FILE *f = fopen("data.txt", "rt");
+  if (!f) { free(buf); return -1;}
+
+  int s = fread(buf, sizeof(char), 20, f);
+
+  if (s != 20) {
+    fclose(f);
+    free(buf);
+    return -1;
+  }
+
+  fclose(f);
+  free(buf);
+  return 0;
+}
+        \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item En C hay que chequear los valores de retorno para ver si hubo un error o no.
+\item En caso de error se suele abortar la ejecuci\'on de la funci\'on actual requiriendo previamente liberar los recursos adquiridos
+\item El problema esta en que es muy f\'acil equivocarse y liberar un recurso aun no adquirido u olvidarse de liberar un recurso que si lo fue.
+\item No s\'olo es una cuesti\'on de leaks de memoria. Datos corruptos por archivos o sockets mal cerrados o leaks en el sistema operativo son otros factores que no se solucionan simplemente con un garbage collector ni reiniciando el programa.
+}
+
+
+\begin{frame}[fragile]{Aplicaci\'on del idiom RAII}
+        \begin{lstlisting}[style=normal]
+struct Buffer {
+  Buffer(int size) {
+    this->data = new char[size];
+  }
+  ~Buffer() {
+    delete[] this->data;
+  }
+};
+
+struct File {
+  File(const char *name, const char *flags) {
+    this->f = fopen(name, flags);
+    if (!this->f) throw std::exception("fopen failed");
+  }
+  ~File() {
+    fclose(this->f);
+  }
+};
+        \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item La idea es simple, si hay un recurso (memoria en el heap, un archivo, un socket) hay que encapsular el recurso en un objeto de C++ cuyo constructor lo adquiera e inicialize y cuyo destructor lo libere.
+\item N\'otese como la clave esta en el dise\~no sim\'etrico del par constructor-destructor.
+\item Vamos a refinar el concepto RAII en las pr\'oximas clases con el concepto de excepciones.
+}
+
+
+\begin{frame}[fragile]{RAII + Stack: No leaks}
+        \begin{lstlisting}[style=normal]
+int process() {
+  Buffer buf(20);
+
+  File f("data.txt", "rt");
+  int s = f.read(buf, sizeof(char), 20, f);
+
+  if (s != 20)
+    return -1;
+
+  return 0;
+} // <-- ~File()
+  //     ~Buffer()
+        \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Tomese un minuto para reflexionar. Vea el c\'odigo y comparelo con otros c\'odigos de otras personas o incluso de usted mismo. Es la difencia entre alguien que sabe C++ de alguien que escribe c\'odigo que compila.
+\item Al instanciarse los objetos RAII en el stack, sus constructores adquieren los recursos autom\'aticamente.
+\item Al irse de scope cada objeto se les invoca su destructor autom\'aticamente y por ende liberan sus recursos sin necesidad de hacerlo expl\'icitamente.
+\item El c\'odigo C++ se simplifica y se hace m\'as robusto a errores de programaci\'on:  RAII + Stack es uno de los conceptos claves en C++.
+\item Veremos mas sobre RAII, manejo de errores y excepciones en C++ en las pr\'oximas clases.
+}
+
+~% endmacro %~
+
+~{ content() }~
+
+\end{document}
+
+

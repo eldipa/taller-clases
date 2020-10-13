@@ -1,0 +1,270 @@
+
+\input{../preamble-tmp.tex}
+
+\title%
+{Clases en C++ - Const}
+
+\subject{Clases en C++ - Const}
+
+\begin{document}
+
+\begin{frame}[noframenumbering,plain]
+   \titlepage
+\end{frame}
+
+
+~% macro content() %~
+\section{Constantes}
+\subsection{Constantes}
+\begin{frame}[fragile]{M\'etodos constantes: no modifican al objeto}
+                   ~% if interactive is off %~
+        \begin{lstlisting}[style=normal,firstnumber=1,linebackgroundcolor={%
+                 \btLstHLB<1>{9-11}%
+         }]~% else %~
+        \begin{lstlisting}[style=normal,firstnumber=1]~% endif %~
+struct Vector {
+  int *data;
+  int size;
+
+  void set(int pos, int val) {
+      this->data[pos] = val;
+  }
+
+  int get(int pos) const {
+      return this->data[pos];
+  }
+
+  /* ... */
+};
+        \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Un m\'etodo constante es un m\'etodo que no modifica el estado interno del objeto. Esto es, no cambia ning\'un atributo ni llama a ning\'un m\'etodo salvo que este sea tambi\'en constante.
+\item Sirve para detectar errores en el c\'odigo en tiempo de compilaci\'on: si un m\'etodo no modifica el estado deber\'ia poderse ponerle la keyword \lstinline[style=normal]!const!; si el compilador falla es por que hay un bug en el c\'odigo y nuestra hip\'otesis de que el m\'etodo no cambiaba el estado interno del objeto es err\'onea.
+}
+
+\begin{frame}[fragile]{Objetos constantes}
+        \begin{lstlisting}[style=normal,firstnumber=17]
+void f() {
+  Vector v(5);
+
+  v.set(0, 1); // no const
+  v.get(0); // const
+}
+
+        \end{lstlisting}
+        \pause
+                   ~% if interactive is off %~
+        \begin{lstlisting}[style=normal,firstnumber=24,linebackgroundcolor={%
+                 \btLstHLR<2>{27}%
+         }]~% else %~
+        \begin{lstlisting}[style=normal,firstnumber=24]~% endif %~
+void f() {
+  const Vector v(5); // objeto constante
+
+  v.set(0, 1); // no const
+  v.get(0); // const
+}
+        \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Const como promesa}
+                   ~% if interactive is off %~
+        \begin{lstlisting}[style=normal,firstnumber=17,linebackgroundcolor={%
+                 \btLstHLB<1>{23}%
+                 \btLstHLR<1>{24}%
+         }]~% else %~
+        \begin{lstlisting}[style=normal,firstnumber=17]~% endif %~
+void f() {
+  Vector v(5);
+
+  g(v);
+}
+
+void g(const Vector &v) {
+  v.set(0, 1); // no const
+  v.get(0); // const
+}
+        \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Es comun recibir par\'ametros constantes. La funci\'on promete que no va a cambiar al objeto recibido como par\'ametro.
+}
+
+\begin{frame}[fragile]{Atributos constantes}
+                   ~% if interactive is off %~
+        \begin{lstlisting}[style=normal,firstnumber=1,linebackgroundcolor={%
+                 \btLstHLB<1>{2,3}%
+                 \btLstHLB<2>{2,3,10}%
+                 \btLstHLB<3>{2,3,6}%
+         }]~% else %~
+        \begin{lstlisting}[style=normal,firstnumber=1]~% endif %~
+struct Vector {
+  int * const data; // no confundir con int const * data;
+  const int size; // equivalente a int const size;
+
+  void set(int pos, int val) {
+      this->data[pos] = val;
+  }
+
+  int get(int pos) const {
+      return this->data[pos];
+  }
+
+  /* ... */
+};
+        \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Tambi\'en podemos tener atributos constantes. Estos toman un valor cuando se crean y lo mantienen durante toda la vida del objeto.
+\item Peque\~na aclaraci\'on: \lstinline[style=normal]!const int! y \lstinline[style=normal]!int const! son equivalentes asi como tambi\'en \lstinline[style=normal]!const int *! y \lstinline[style=normal]!int const *!. Sin embargo es distinto \lstinline[style=normal]!int * const!. Confuso?
+\item \lstinline[style=normal]!const int * p! se lee como "\lstinline[style=normal]!p! es un puntero; a \lstinline[style=normal]!int!; constante" mientras que \lstinline[style=normal]!int * const p! se lee como "\lstinline[style=normal]!p! es constante; puntero; a \lstinline[style=normal]!int!". El primero apunta a \lstinline[style=normal]!int!s constantes mientras que el segundo es el puntero quien es constante.
+}
+
+\subsection{Initialization}
+                   ~% if interactive is off %~
+\begin{frame}[fragile]{Member Initialization List}
+        \begin{lstlisting}[style=normal,firstnumber=1,linebackgroundcolor={%
+                 \btLstHLB<1>{5}%
+                 \btLstHLB<2>{6-8}%
+         }]
+struct Vector {
+  int *data;
+  int size;
+
+  Vector(int size) {
+    // atributos ya construidos;  aca solo los re-asigno
+    this->data = malloc(size*sizeof(int));
+    this->size = size;
+  }
+        \end{lstlisting}
+        \pause
+        \pause
+        \begin{lstlisting}[style=normal,firstnumber=1,linebackgroundcolor={%
+                 \btLstHLB<3>{5-6}%
+         }]
+struct Vector {
+  int *data;
+  int size;
+
+  Vector(int size) : data(malloc(size*sizeof(int))),
+                     size(size) {
+
+  }
+        \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Al ejecutarse el cuerpo del constructor todos sus atributos ya estan creados.
+\item Si se necesita construir alguno o todos sus atributos con par\'amentros especiales hay que usar la member initialization list.
+\item Esto es \'util no s\'olo para crear objetos que no pueden cambiar una vez construidos (como los atributos \lstinline[style=normal]!const! y las referecias) sino que tambi\'en es necesario si queremos construir otros objetos con par\'ametros custom, sean nuestros atributos o nuestros ancestros (herencia).
+}
+                   ~% endif %~
+
+\begin{frame}[fragile]{Inicializaci\'on de atributos constantes}
+                   ~% if interactive is off %~
+        \begin{lstlisting}[style=normal,firstnumber=1,linebackgroundcolor={%
+                 \btLstHLR<1>{2,7}%
+                 \btLstHLR<2>{3,8}%
+         }]~% else %~
+        \begin{lstlisting}[style=normal,firstnumber=1]~% endif %~
+struct Vector {
+  int * const data;
+  const int size;
+
+  Vector(int size) {
+    // atributos ya construidos;  aca solo los re-asigno
+    this->data = malloc(size*sizeof(int));
+    this->size = size;
+  }
+        \end{lstlisting}
+        \pause
+        \pause
+                   ~% if interactive is off %~
+        \begin{lstlisting}[style=normal,firstnumber=1,linebackgroundcolor={%
+                 \btLstHLB<3>{2,5}%
+                 \btLstHLB<4>{3,6}%
+         }]~% else %~
+        \begin{lstlisting}[style=normal,firstnumber=1]~% endif %~
+struct Vector {
+  int * const data;
+  const int size;
+
+  Vector(int size) : data(malloc(size*sizeof(int))),
+                     size(size) {
+
+  }
+        \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item La member initialization list es el \'unico lugar para inicializar atributos constantes y referencias.
+}
+
+\begin{frame}[fragile]{Inicializaci\'on de atributos no-default}
+                   ~% if interactive is off %~
+    \begin{lstlisting}[style=normal,firstnumber=1,linebackgroundcolor={%
+                 \btLstHLR<1>{5}%
+         }]~% else %~
+    \begin{lstlisting}[style=normal,firstnumber=1]~% endif %~
+struct DoubleVector {
+  Vector fg;
+  Vector bg;
+
+  DoubleVector(int size) {
+      // fg, bg??
+  }
+}
+        \end{lstlisting}
+        \pause
+                   ~% if interactive is off %~
+    \begin{lstlisting}[style=normal,firstnumber=1,linebackgroundcolor={%
+                 \btLstHLB<2>{5}%
+         }]~% else %~
+    \begin{lstlisting}[style=normal,firstnumber=1]~% endif %~
+struct DoubleVector {
+  Vector fg;
+  Vector bg;
+
+  DoubleVector(int size) : fg(size), bg(size) {
+  }
+}
+        \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item La member initialization list es el \'unico lugar para inicializar atributos que son objetos que no tienen un constructor por default o sin par\'ametros.
+}
+
+\begin{frame}[fragile]{Delegating constructors}
+    \begin{lstlisting}[style=normal,firstnumber=1]
+struct DoubleVector {
+  DoubleVector(int size) : fg(size), bg(size) { }
+
+  DoubleVector(int size, int val) : fg(size), bg(size) {
+      for (int i = 0; i < size; ++i) {
+          fg.set(i, val);
+          bg.set(i, val);
+      }
+        \end{lstlisting}
+        \pause
+    \begin{lstlisting}[style=normal,firstnumber=1]
+struct DoubleVector {
+  DoubleVector(int size) : fg(size), bg(size) { }
+
+  DoubleVector(int size, int val) : DoubleVector(size) {
+      for (int i = 0; i < size; ++i) {
+          fg.set(i, val);
+          bg.set(i, val);
+      }
+        \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item La member initialization list permite llamar a otro constructor para delegarle parte de la construcci\'on del objeto. Esto permite reutilizar c\'odigo entre los constructores.
+}
+
+
+~% endmacro %~
+
+~{ content() }~
+
+\end{document}
+
+

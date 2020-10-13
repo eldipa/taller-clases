@@ -1,0 +1,383 @@
+
+\input{../preamble-tmp.tex}
+
+\title%
+{Clases en C++ - Struct \& Class}
+
+\subject{Clases en C++ - Struct \& Class}
+
+\begin{document}
+
+\begin{frame}[noframenumbering,plain]
+   \titlepage
+\end{frame}
+
+~% macro content() %~
+\section{structs y clases en C++}
+\subsection{Bundle}
+\begin{frame}[plain,fragile]{TDAs - Clases en C}{}
+   \begin{columns}[t]
+      \begin{column}{.4\linewidth}
+         \begin{lstlisting}[style=normal,firstnumber=1]
+struct Vector {
+  int *_data; /*private*/
+  int _size; /*private*/
+};
+
+
+         \end{lstlisting}
+      \end{column}
+      \begin{column}{.4\linewidth}
+         \begin{lstlisting}[style=normal,firstnumber=15]
+void f() {
+  struct Vector v;
+  vector_create(&v, 5);
+  vector_get(&v, 0);
+  vector_destroy(&v);
+}
+         \end{lstlisting}
+      \end{column}
+   \end{columns}
+
+   \begin{columns}[t]
+      \begin{column}{.4\linewidth}
+        \begin{lstlisting}[style=normal,firstnumber=5]
+void vector_create(struct Vector *v, int size) {
+  v->_data = malloc(size*sizeof(int));
+  v->_size = size;
+}
+int vector_get(struct Vector *v, int pos) {
+  return v->_data[pos];
+}
+void vector_destroy(struct Vector *v) {
+  free(v->_data);
+}
+
+        \end{lstlisting}
+      \end{column}
+      \begin{column}{.4\linewidth}
+      \end{column}
+   \end{columns}
+\end{frame}
+\note[itemize] {
+\item El est\'andar de C++ garantiza que si un \lstinline[style=normal]!struct! no tiene ningun feature de C++ (o sea, se parece a un struct de C) se lo llama "plain struct" y puede ser usado por libs de C desde C++ 
+\item Por convenci\'on los nombres de las funciones del TDA deben tener como prefijo de su nombre el nombre del TDA: esto es por que en C todas las funciones terminan en el mismo espacio global y deben tener nombres \'unicos. El conflicto de nombres es un problema com\'un en proyectos grandes en C. En C++ tenemos mejores formas de resolverlos....
+\item Asi tambi\'en es convenci\'on pasar como primer argumento un puntero al \lstinline[style=normal]!struct!. Veremos que en C++ hay una forma m\'as conveniente de hacer esto...
+\item Y otra convenci\'on mas: los atributos que no deber\'ian ser ni le\'idos ni modificados por el usuario son marcados como privados. Dependiendo de la convenci\'on hay gente que le pone un guion bajo al principio de la variable, otros al final y otros ponen solamente un comentario. C++ nos dara herramientas para forzar esto en tiempo de compilaci\'on.
+}
+
+
+~% if interactive is off %~
+\begin{frame}[plain,fragile]{Keyword struct impl\'icita}
+   \begin{columns}[t]
+      \begin{column}{.4\linewidth}
+         \begin{lstlisting}[style=normal,firstnumber=1]
+struct Vector {
+  int *_data; /*private*/
+  int _size; /*private*/
+};
+
+
+         \end{lstlisting}
+      \end{column}
+      \begin{column}{.4\linewidth}
+         \begin{lstlisting}[style=normal,firstnumber=15,linebackgroundcolor={%
+                 \btLstHLB<1>{16}%
+         }]
+void f() {
+  Vector v;
+  vector_create(&v, 5);
+  vector_get(&v, 0);
+  vector_destroy(&v);
+}
+         \end{lstlisting}
+      \end{column}
+   \end{columns}
+
+   \begin{columns}[t]
+      \begin{column}{.4\linewidth}
+        \begin{lstlisting}[style=normal,firstnumber=5]
+void vector_create(Vector *v, int size) {
+  v->_data = malloc(size*sizeof(int));
+  v->_size = size;
+}
+int vector_get(Vector *v, int pos) {
+  return v->_data[pos];
+}
+void vector_destroy(Vector *v) {
+  free(v->_data);
+}
+
+        \end{lstlisting}
+      \end{column}
+      \begin{column}{.4\linewidth}
+      \end{column}
+   \end{columns}
+\end{frame}
+\note[itemize] {
+\item En C++ no es necesario usar la keyword \lstinline[style=normal]!struct! en todos lados.
+}
+~% endif %~
+
+\begin{frame}[fragile]{Bundle: atributos + m\'etodos}
+        \begin{lstlisting}[style=normal,firstnumber=1]
+struct Vector {
+  int *_data; /*private*/
+  int _size; /*private*/
+
+  void vector_create(Vector *v, int size) {
+    v->_data = malloc(size*sizeof(int));
+    v->_size = size;
+  }
+
+  int vector_get(Vector *v, int pos) {
+    return v->_data[pos];
+  }
+
+  void vector_destroy(Vector *v) {
+    free(v->_data);
+  }
+};
+        \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Se integran las funciones y los datos del TDA en una sola unidad.
+\item Los datos del TDA se lo llaman atributos y las funciones m\'etodos.
+}
+
+~% if interactive is off %~
+\begin{frame}[fragile]{this: un puntero a la instancia}
+        \begin{lstlisting}[style=normal,firstnumber=1,linebackgroundcolor={%
+                 \btLstHLB<1>{5,10,14}%
+         }]
+struct Vector {
+  int *_data; /*private*/
+  int _size; /*private*/
+
+  void vector_create(int size) {
+    this->_data = malloc(size*sizeof(int));
+    this->_size = size;
+  }
+
+  int vector_get(int pos) {
+    return this->_data[pos];
+  }
+
+  void vector_destroy() {
+    free(this->_data);
+  }
+};
+        \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Las funciones del TDA pasan a ser m\'etodos del TDA y reciben como par\'ametro impl\'icito un puntero a la instancia.
+\item El puntero es un puntero constante a la instancia (\lstinline[style=normal]!Vector *const!) y se lo nombra con la keyword \lstinline[style=normal]!this!. En otras palabras \lstinline[style=normal]!this! es un puntero constante que apunta al objeto sobre el cual se esta invocando el m\'etodo.
+}
+
+\begin{frame}[fragile]{Invocaci\'on de m\'etodos}
+   \begin{columns}[t]
+      \begin{column}{.4\linewidth}
+         \begin{lstlisting}[style=normal,firstnumber=14]
+// En C
+void f() {
+  struct Vector v;
+  vector_create(&v, 5);
+  vector_get(&v, 0);
+
+  v._data;
+
+  vector_destroy(&v);
+}
+         \end{lstlisting}
+     \end{column}
+      \begin{column}{.4\linewidth}
+        \begin{lstlisting}[style=normal,firstnumber=14]
+// En C++
+void f() {
+  Vector v;
+  v.vector_create(5);
+  v.vector_get(0);
+
+  v._data;
+
+  v.vector_destroy();
+}
+        \end{lstlisting}
+    \end{column}
+\end{columns}
+\end{frame}
+\note[itemize] {
+\item Se accede a los atributos y/o m\'etodos como en C
+\item En C, la instancia sobre la que se quiere invocar un m\'etodo es pasada como par\'ametro de forma expl\'icita mientras que en C++ es impl\'icita e invisible.
+}
+
+\begin{frame}[fragile]{Reducci\'on de colisiones de nombres}
+        \begin{lstlisting}[style=normal,firstnumber=1,linebackgroundcolor={%
+                 \btLstHLB<1>{5,10,14}%
+         }]
+struct Vector {
+  int *_data; /*private*/
+  int _size; /*private*/
+
+  void create(int size) { // Vector::create
+    this->_data = malloc(size*sizeof(int));
+    this->_size = size;
+  }
+
+  int get(int pos) { // Vector::get
+    return this->_data[pos];
+  }
+
+  void destroy() { // Vector::destroy
+    free(this->_data);
+  }
+};
+        \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Los m\'etodos de un TDA no entran en conflicto con otros aunque se llamen iguales. El m\'etodo \lstinline[style=normal]!get! de \lstinline[style=normal]!Vector! no entra en conflicto con el m\'etodo \lstinline[style=normal]!get! de \lstinline[style=normal]!Matrix!, por ejemplo
+\item En rigor un m\'etodo de un TDA se lo llama \lstinline[style=normal]!NombreTDA::NombreMetodo!, por eso \lstinline[style=normal]!Vector::get! es distinto de \lstinline[style=normal]!Matrix::get!.
+\item Veremos con mas detalle el concepto de namespace en las pr\'oximas clases.
+}
+
+
+\subsection{Permisos de acceso}
+\begin{frame}[plain,fragile]{Permisos de acceso}
+        \begin{lstlisting}[style=normal,firstnumber=1,linebackgroundcolor={%
+                 \btLstHLB<1>{2,6}%
+                 \btLstHLB<2>{2-4}%
+                 \btLstHLB<3>{6-18}%
+         }]
+struct Vector {
+  private:
+  int *data;
+  int size;
+
+  public:
+  void create(int size) {
+    this->data = malloc(size*sizeof(int));
+    this->size = size;
+  }
+
+  int get(int pos) {
+    return this->data[pos];
+  }
+
+  void destroy() {
+    free(this->data);
+  }
+};
+        \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Por default, un \lstinline[style=normal]!struct! tiene sus atributos y m\'etodos p\'ublicos. Esto significa que pueden accederse desde cualquier lado.
+\item Se puede cambiar el default forzando distintos permisos.
+\item \lstinline[style=normal]!private! hace que s\'olo los m\'etodos internos puedan acceder a los m\'etodos y atributos privados.
+\item M\'as sobre los permisos \lstinline[style=normal]!public/protected/private! y su relaci\'on con la herencia en las pr\'oximas clases.
+}
+~% endif %~
+
+\begin{frame}[fragile]{Permisos de acceso}{}
+   \begin{columns}[t]
+      \begin{column}{.4\linewidth}
+         \begin{lstlisting}[style=normal,firstnumber=14]
+// En C
+void f() {
+  struct Vector v;
+  vector_create(&v, 5);
+  vector_get(&v, 0);
+
+  v._data;
+
+  vector_destroy(&v);
+}
+         \end{lstlisting}
+     \end{column}
+      \begin{column}{.4\linewidth}
+                   ~% if interactive is off %~
+        \begin{lstlisting}[style=normal,firstnumber=14,linebackgroundcolor={%
+                 \btLstHLR<1>{20}%
+         }]~% else %~
+        \begin{lstlisting}[style=normal,firstnumber=14]~% endif %~
+// En C++
+void f() {
+  Vector v;
+  v.create(5);
+  v.get(0);
+
+  v.data;
+
+  v.destroy();
+}
+        \end{lstlisting}
+    \end{column}
+\end{columns}
+\end{frame}
+
+\subsection{Clases}
+\begin{frame}[fragile]{Clases en C++}
+        \begin{lstlisting}[style=normal,firstnumber=1]
+struct Vector {
+  int *data;  // public by default
+  int size;   // public by default
+};
+
+class Vector {
+  int *data;  // private by default
+  int size;   // private by default
+};
+        \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Absolutamente todo lo visto con structs en C++ aplica a las clases de C++. La \'unica diferencia es que las clases tienen sus atributos y m\'etodos privados por default.
+}
+
+
+\begin{frame}[plain,fragile]{Unidades de compilaci\'on}{}
+   \begin{columns}[t]
+      \begin{column}{.4\linewidth}
+        \begin{lstlisting}[style=normal,firstnumber=1]
+class Vector {
+  private:
+  int *data;
+  int size;
+
+  public:
+  void create(int size);
+  int get(int pos);
+  void destroy();
+
+}; // en el archivo vector.h
+        \end{lstlisting}
+     \end{column}
+     \begin{column}{.4\linewidth}
+        \begin{lstlisting}[style=normal,firstnumber=1]
+#include "vector.h"
+void Vector::create(int size) {
+  this->data = malloc(
+  this->size = size;
+}
+
+int Vector::get(int pos) {
+  return this->data[pos];
+}
+
+void Vector::destroy() {
+  free(this->data);
+} // en el archivo vector.cpp
+        \end{lstlisting}
+    \end{column}
+\end{columns}
+\end{frame}
+\note[itemize] {
+\item Hasta ahora se integr\'o en un solo lugar el c\'odigo de cada m\'etodo. Es m\'as simple pero trae problemas de performance del proceso de compilaci\'on.
+\item Para evitar recompilar una y otra vez el c\'odigo de los m\'etodos se le define en un archivo .cpp separado de las declaraciones del .h
+}
+
+~% endmacro %~
+
+~{ content() }~
+
+\end{document}
+
+
