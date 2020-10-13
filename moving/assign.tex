@@ -1,0 +1,225 @@
+
+\input{../preamble-tmp.tex}
+
+\title%
+{Pasaje de objetos en C++ - Asignaci\'on}
+
+\subject{Pasaje de objetos en C++ - Asignaci\'on}
+
+\tikzset{
+  pointer/.style={->, dashed, draw, black, line width=0.03cm},
+}
+
+\tikzset{
+ nodeinvisible/.style={opacity=.01},
+ nodevisible on/.style={alt={#1{}{nodeinvisible}}},
+ arrowinvisible/.style={opacity=.01},
+ arrowvisible on/.style={alt={#1{}{arrowinvisible}}},
+ alt/.code args={<#1>#2#3}{%
+   \alt<#1>{\pgfkeysalso{#2}}{\pgfkeysalso{#3}} % \pgfkeysalso doesn't change the path
+ },
+}
+
+\begin{document}
+
+\begin{frame}[noframenumbering,plain]
+   \titlepage
+\end{frame}
+
+
+~% macro content() %~
+\section{Asignaci\'on}
+\subsection{Asignaci\'on por copia}
+\begin{frame}[fragile]{Asignaci\'on}
+                   ~% if interactive is off %~
+        \begin{lstlisting}[style=normal,firstnumber=1,linebackgroundcolor={%
+                 \btLstHLB<1>{1-3,9}%
+                 \btLstHLB<2>{7}%
+         }]~% else %~
+        \begin{lstlisting}[style=normal,firstnumber=1]~% endif %~
+Vector f(Vector v) {
+  Vector a(v);
+  Vector b = v;
+
+  Vector c(5);
+
+  c = v;
+
+  return v;
+}
+        \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item En la l\'inea 1 se recibe por copia un vector al que llamaremos \lstinline[style=normal]!v!.
+\item En la l\'inea 2 y 3 se crean 2 vectores m\'as copiandose de \lstinline[style=normal]!v!, ambos llaman al constructor por copia.
+\item En la l\'inea 9 se retorna un vector por copia tambi\'en salvo que \lstinline[style=normal]!Vector! implemente el constructor por movimiento en cuyo caso \lstinline[style=normal]!v! se mueve y no se copia.
+\item En la l\'inea 7 sucede algo distinto. El vector \lstinline[style=normal]!c! copia el contenido del vector \lstinline[style=normal]!v!. Pero el objeto \lstinline[style=normal]!c! ya estaba creado asi que en vez de llamar al constructor por copia llama al operador asignaci\'on por copia.
+}
+
+\begin{frame}[fragile]{Asignaci\'on por copia: un objeto creado copiando de otro}
+                   ~% if interactive is off %~
+        \begin{lstlisting}[style=normal,firstnumber=1,linebackgroundcolor={%
+                 \only<1>{\def\lst@linebgrdcmd####1####2####3{}}%
+                 \btLstHLB<2>{10,11}%
+                 \btLstHLB<3>{13-15}%
+                 \btLstHLB<4>{6-8}%
+         }]~% else %~
+        \begin{lstlisting}[style=normal,firstnumber=1]~% endif %~
+struct Vector {
+  int *data;
+  int size;
+
+  Vector& operator=(const Vector &other) {
+    if (this == &other) {
+      return *this; // other is myself!
+    }
+
+    if (this->data)
+        free(this->data);
+
+    this->data = (int*)malloc(other.size*sizeof(int));
+    this->size = other.size;
+    memcpy(this->data, other.data; this->size);
+
+    return *this;
+  }
+};
+        \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Para copiar el contenido de un objeto en otro ya creado se usa el operador asignaci\'on.
+\item Como el objeto \lstinline[style=normal]!this! ya esta creado, debemos recordar que todos sus atributos estan ya creados: no podemos cambiar ninguno de sus atributos constantes.
+\item Validar que no nos hayan quitado el ownership de nuestros recursos.
+\item Todos los objetos en C++ son copiables por asignaci\'on asi que si un objeto no implementa la sobrecarga del operador asignaci\'on, C++ le creara una implementaci\'on por default que hara una copia bit a bit naive.
+\item Tambi\'en es posible que nos asignemos a nosotros mismos (haciendo \lstinline[style=normal]!vec = vec;!). Debemos programar el operador asignaci\'on de tal forma que evite copiarse a si mismo.
+\item El operador asignaci\'on no es el \'unico operador que se puede sobrecargar. Ya veremos otros y en m\'as detalle en las pr\'oximas clases.
+}
+
+\subsection{Asignaci\'on por movimiento}
+\begin{frame}[fragile,plain]{Asignaci\'on por movimiento}{}
+        \begin{lstlisting}[style=normal,firstnumber=1]
+struct Vector {
+  int *data;
+  int size;
+
+  Vector& operator=(Vector&& other) {
+    if (this == &other) {
+      return *this; // other is myself!
+    }
+
+    if (this->data)
+        free(this->data);
+
+    this->data = other.data;
+    this->size = other.size;
+
+    other.data = nullptr;
+    other.size = 0;
+
+    return *this;
+  }
+};
+        \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]{Ej Asignaci\'on por movimiento: swap de objetos}{}
+        \begin{lstlisting}[style=normal,firstnumber=10]
+void swap(Vector& a, Vector& b) {
+    Vector t = a;  // copia (constructor)
+    a = b;  // copia (asignacion)
+    b = t;  // copia (asignacion)
+}
+        \end{lstlisting}
+        \begin{lstlisting}[style=normal,firstnumber=10]
+void swap(Vector& a, Vector& b) {
+    Vector t = std::move(a); // a se mueve a t (constructor)
+    a = std::move(b); // b se mueve a a (asignacion)
+    b = std::move(t); // t se mueve a b (asignacion)
+}
+        \end{lstlisting}
+\end{frame}
+
+
+%\begin{frame}[plain, fragile]{}{}
+%   \begin{columns}[T]
+%      \begin{column}{.5\linewidth}
+%         \begin{lstlisting}[style=normal,numbers=none]
+%void _copy(const Vector &other) {
+%  data = malloc(other.size*
+%                sizeof(int));
+%  size = other.size;
+%  memcpy(data, other.data, size);
+%}
+%
+%Vector(const Vector &other) {
+%  _copy(other);
+%}
+%
+%Vector&
+%operator=(const Vector &other) {
+%  if (this == &other)
+%    return *this;
+%
+%  !data || free(data);
+%  _copy(other);
+%  return *this;
+%}
+%
+%         \end{lstlisting}
+%      \end{column}
+%      \begin{column}{.45\linewidth}
+%         \begin{lstlisting}[style=normal,numbers=none]
+%void _move(Vector&& other) {
+%  data = other.data;
+%  size = other.size;
+%  other.data = nullptr;
+%  other.size = 0;
+%}
+%
+%Vector(Vector&& other) {
+%  _move(other);
+%}
+%
+%Vector&
+%operator=(Vector&& other) {
+%  if (this == &other)
+%    return *this;
+%
+%  !data || free(data);
+%  _move(other);
+%  return *this;
+%}
+%         \end{lstlisting}
+%      \end{column}
+%   \end{columns}
+%\end{frame}
+
+\subsection*{Objetos no copiables}
+\begin{frame}[fragile]{ Objetos no copiables}{}
+        \begin{lstlisting}[style=normal,firstnumber=1]
+struct File {
+  public:
+  File copy(const char *to_where) { ... }
+
+  private:
+  File(const File &other) = delete;
+  File& operator=(const File &other) = delete;
+
+};
+        \end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item En C++11 podemos decir que tanto el constructor por copia como el de asignaci\'on estan borrados (\lstinline[style=normal]!delete!). Si en algun momento intentamos hacer una copia el compilador dara un error.
+\item Pero si trabajamos en C++98, debemos usar algun workaround: declarar y definir el constructor por copia y el operador asignaci\'on y que su implementaci\'on sea fallar (lanzar una excepci\'on). El intento fallido de copia se detecta en runtime.
+\item Otra forma seria declarar pero no definir ni el constructor por copia ni el operador asignaci\'on y hacerlos privados. El intento fallido de copia se detecta en tiempo de compilaci\'on y linkeo.
+}
+
+
+~% endmacro %~
+
+~{ content() }~
+
+
+\end{document}
+
+
