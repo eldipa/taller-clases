@@ -48,7 +48,6 @@ pdf: _prepare
 	        latex ${COMPILE_FLAGS} '\input{$$iname-tmp}';	\
 	        latex ${COMPILE_FLAGS} '\input{$$iname-tmp}';	\
 	        rm $$iname-tmp.tex;				\
-	        mat ${TMP}/$$iname-tmp.pdf || true;		\
 	        mv ${TMP}/$$iname-tmp.pdf $$iname.pdf;		\
 	    done;					\
 	    rm ../preamble-tmp.tex;			\
@@ -71,7 +70,6 @@ handout:  _prepare
 	        gs ${GS_FLAGS} -sOutputFile=${TMP}/$$iname-tmp-handout.${COMPRESS_LEVEL}.pdf $$iname-tmp-handout.pdf;	\
 	        rm $$iname-tmp-handout.pdf;		\
 	        mv ${TMP}/$$iname-tmp-handout.${COMPRESS_LEVEL}.pdf $$iname-handout.pdf;	\
-	        mat $$iname-handout.pdf || true;	\
 	        7z a ${COMPRESS_FLAGS} $$iname-handout.7z $$iname-handout.pdf;	\
 	    done;					\
 	    rm ../preamble-tmp.tex;			\
@@ -90,7 +88,6 @@ interactive:  _prepare
 	        latex ${COMPILE_FLAGS} '\input{$$iname-tmp}';	\
 	        latex ${COMPILE_FLAGS} '\input{$$iname-tmp}';	\
 	        rm $$iname-tmp.tex;				\
-	        mat ${TMP}/$$iname-tmp.pdf || true;		\
 	        mv ${TMP}/$$iname-tmp.pdf $$iname-interactive.pdf; \
 	    done;					\
 	    rm ../preamble-tmp.tex;			\
