@@ -1,10 +1,10 @@
 \input{../preamble-tmp.tex}
 
 \title%
-{Memoria en C/C++ - Errores de Memoria}
+{Memoria en C++ - Buffer Overflow (BO)}
 
 
-\subject{Memoria en C/C++ - Errores de Memoria}
+\subject{Memoria en C++ - Buffer Overflow (BO)}
 
 
 \begin{document}
@@ -18,8 +18,9 @@
 \section{Buffer overflows}
 \begin{frame}[fragile]{Smash the stack for fun and profit}
          \begin{lstlisting}[style=normal]
-// compilar con el flag -fno-stack-protector
-#include <stdio.h>
+// compilar con flags:
+//  -Wno-deprecated-declarations -std=c++11 -fno-stack-protector
+#include <cstdio>
 
 int main(int argc, char *argv[]) {
     int cookie = 0;
@@ -63,8 +64,9 @@ strncpy(dst, src, max_dst_size);
 \end{frame}
 \begin{frame}[fragile]{Challenge: hacer que el programa imprima "You win!"}
          \begin{lstlisting}[style=normal]
-// compilar con el flag -fno-stack-protector
-#include <stdio.h>
+// compilar con flags:
+//  -Wno-deprecated-declarations -std=c++11 -fno-stack-protector
+#include <cstdio>
 
 int main(int argc, char *argv[]) {
     int cookie = 0;

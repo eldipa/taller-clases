@@ -1,10 +1,10 @@
 \input{../preamble-tmp.tex}
 
 \title%
-{Memoria en C/C++ - Tama\~no y Alineaci\'on}
+{Memoria en C++ - Tama\~no y Alineaci\'on}
 
 
-\subject{Memoria en C/C++ - Tama\~no y Alineaci\'on}
+\subject{Memoria en C++ - Tama\~no y Alineaci\'on}
 
 
 \begin{document}
@@ -61,12 +61,12 @@ char a[] = "AB";@
    \end{columns}
 \end{frame}
 \note[itemize] {
-\item C y C++ son lenguajes de bajo nivel para que el programador pueda tener un control absoluto de d\'onde y c\'omo se ejecuta el c\'odigo.
-\item El tama\~no en bytes de los tipos depende de la arquitectura y del compilador
+\item C, C++ y Rust son lenguajes de bajo nivel para que el programador pueda tener un control absoluto de d\'onde y c\'omo se ejecuta el c\'odigo.
+\item El tama\~no en bytes de los tipos depende de la arquitectura y del compilador. En \lstinline[style=normal]!\#include <cstdint>! se puede tener acceso a tipos con tama\~nos espec\'ificos como \lstinline[style=normal]!uint64_t!
 \item El compilador puede guardar las variables en posiciones de memoria m\'ultiplos de 4 (depende de la arquitectura y de los flags de compilaci\'on): variables alineadas son accedidas m\'as r\'apidamente que las desalineadas.
 \item Como contra, la alineaci\'on despedicia espacio (padding) hay un tradeoff entre velocidad y espacio.
 \item El tama\~no de un puntero no depende de a que tipo apunta; todos los punteros ocupan el mismo tama\~no (que depende de la arquitectura).
-\item A los strings en C escritos en el c\'odigo del programa el compilador les agrega el caracter nulo (byte 0). Tenerlo en cuenta!!
+\item A los strings en C/C++ escritos en el c\'odigo del programa el compilador les agrega el caracter nulo (byte 0). Tenerlo en cuenta!!
 }
 
 
@@ -144,65 +144,72 @@ struct S s = {1,2,3,4};
 }
 
 % endianess
-\begin{frame}[fragile]{Endianess: representaci\'on en memoria}
+\begin{frame}[fragile]{Endianess: representaci\'on en memoria (intro)}
    \begin{columns}
-      \begin{column}{.05\linewidth}
-         \begin{lstlisting}[style=normal]
-int i = 1;
-
-
-
-
-
-int j = 1023;
-         \end{lstlisting}
-      \end{column}
-      \begin{column}{.05\linewidth}
-      \end{column}
-      \begin{column}{.3\linewidth}
-         \vspace*{0.5mm}
+      \begin{column}{.03\linewidth}
          \begin{lstlisting}[style=normalnonumbers]
-((unsigned char*)&i)
-   == {0, 0, 0, 1}
+Hay "537" rupees.
 
-((unsigned char*)&i)
-   == {1, 0, 0, 0}
+
+
          \end{lstlisting}
+      \end{column}
+      \begin{column}{.01\linewidth}
+      \end{column}
+      \begin{column}{.6\linewidth}
          \vspace*{5mm}
          \begin{lstlisting}[style=normalnonumbers]
-((unsigned char*)&j)
-   == {0, 0, 3, 255}
+Hay "quinientos treinta y siete" rupees.
+// El digito de la izquierda es
+// el *mas* significativo
 
-((unsigned char*)&j)
-   == {255, 3, 0, 0}
+
+Hay "setecientos treinta y cinco" rupees.
+// El digito de la izquierda es
+// el *menos* significativo
          \end{lstlisting}
       \end{column}
-      \begin{column}{.4\linewidth}
-~% if interactive is off %~
-         \begin{tikzpicture}[align=left, cell/.style={rectangle,draw=black},
-            space/.style={minimum height=1.5em,matrix of nodes,row sep=-\pgflinewidth,column sep=-\pgflinewidth,column 1/.style={font=\ttfamily}},text depth=0.5ex,text height=2ex,nodes in empty cells]
+   \end{columns}
+\end{frame}
+\note[itemize] {
+\item Por convenci\'on los n\'umeros ar\'abicos se leen de izquierda a derecha con el d\'igito de la izquierda como el m\'as significativo.
+\item Otras notaciones podr\'ian tener convenciones distintas.
+\item Nota: rupees es la moneda de The Legend of Zelda.
+}
+\begin{frame}[fragile]{Endianess: representaci\'on en memoria}
+   \begin{columns}
+      \begin{column}{.03\linewidth}
+         \begin{lstlisting}[style=normalnonumbers]
+short i = 0x1234;
 
-            \matrix (endian)[space, row sep=0.5cm, column 5/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=2em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 1/.style={nodes={cell,minimum width=2em}}]
-            {
-               0 & 0 & 0 & 1 & big\\
-               1 & 0 & 0 & 0 & little\\
-            };
-            \matrix [space, row sep=0.5cm, column 5/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=2em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 1/.style={nodes={cell,minimum width=2em}}, below=1cm of endian] 
-            {
-               0 & 0 & 3 & ff & big\\
-               ff & 3 & 0 & 0 & little\\
-            };
-         \end{tikzpicture}
-~% endif %~
+
+
+         \end{lstlisting}
+      \end{column}
+      \begin{column}{.01\linewidth}
+      \end{column}
+      \begin{column}{.6\linewidth}
+         \vspace*{5mm}
+         \begin{lstlisting}[style=normalnonumbers]
+((unsigned char*)&i) == {0x12, 0x34}
+// Primer byte es el *mas* significativo
+// --> arquitectura big endian
+
+
+
+((unsigned char*)&i) == {0x34, 0x12}
+// Primer byte es el *menos* significativo
+// --> arquitectura little endian
+         \end{lstlisting}
       \end{column}
    \end{columns}
 \end{frame}
 \note[itemize] {
 \item El byte m\'as significativo se lee/escribe primero (o esta primero en la memoria) en las arquitecturas big endian.
 \item Por el contrario en las arquitecturas little endian es el byte menos significativo quien esta primero en la memoria.
-\item El endianess es irrelevante si siempre trabajamos los \lstinline[style=normal]!int!s como n\'umeros pero se vuelve relevante en el momento que queremos interpretar un \lstinline[style=normal]!int! como una tira de bytes (\lstinline[style=normal]!char*!) o viceversa. Y esto es necesario cuando queremos escribir un n\'umero en un archivo binario o enviarlo por la red a otra m\'aquina a traves de un socket!
-\item Siempre hay que especificar el endianess en que se guardan/envian los datos. 
-\item Obviamente lo mencionado aqui para los \lstinline[style=normal]!int!s aplica para el resto de los objetos en memoria, como los \lstinline[style=normal]!short!s
+\item El endianess es irrelevante si siempre trabajamos los \lstinline[style=normal]!short!s como n\'umeros pero se vuelve relevante en el momento que queremos interpretar un \lstinline[style=normal]!short! como una tira de bytes (\lstinline[style=normal]!char*!) o viceversa. Y esto es necesario cuando queremos escribir un n\'umero en un archivo binario o enviarlo por la red a otra m\'aquina a traves de un socket!
+\item Siempre hay que especificar el endianess en que se guardan/envian los datos.
+\item Obviamente lo mencionado aqui para los \lstinline[style=normal]!short!s aplica para el resto de los objetos en memoria, como los \lstinline[style=normal]!int!s
 }
 
 \begin{frame}[fragile]{Endianess: representaci\'on en memoria}

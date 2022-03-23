@@ -1,9 +1,9 @@
 \input{../preamble-tmp.tex}
 
 \title%
-{Memoria en C/C++ - Segmentos}
+{Memoria en C++ - Segmentos}
 
-\subject{Memoria en C/C++ - Segmentos}
+\subject{Memoria en C++ - Segmentos}
 
 
 \begin{document}
@@ -11,13 +11,6 @@
 \begin{frame}[noframenumbering,plain]
    \titlepage
 \end{frame}
-
-~% if interactive is off %~
-\begin{frame}{De qu\'e va esto?}
-   \tableofcontents
-   % You might wish to add the option [pausesections]
-\end{frame}
-~% endif %~
 
 ~% macro content() %~
 \section{Segmentos de Memoria}
@@ -123,7 +116,11 @@ void foo(int arg) {
          \end{lstlisting}
 \end{frame}
 ~% endif %~
-\begin{frame}[fragile]{El donde importa!}
+\note[itemize] {
+\item En C++ usaras m\'as frecuentemente \lstinline[style=normal]!new! que \lstinline[style=normal]!malloc! para reservar memoria en el heap. La diferencia es que \lstinline[style=normal]!new! ademas de reservar memoria llama a los constructores (que los veremos pronto).
+}
+
+\begin{frame}[fragile]{El donde importa! - Segmentation Fault}
          \begin{lstlisting}[style=normal]
 
 void f() {
@@ -138,6 +135,21 @@ void f() {
 \note[itemize] {
 \item Como el puntero "a" apunta al Code Segment y este es de solo lectura, tratar de modificarlo termina en un Segmentation Fault
 }
+
+\begin{frame}[fragile]{El donde importa! - Cache friendly}
+    \begin{figure}[h]
+    \centering
+    \includegraphics[scale=0.8]{mem_alloc.png}
+    \end{figure}
+\end{frame}
+\note[itemize] {
+\item El primer array contiene los elementos de interes mientras que el segundo contiene punteros a los elementos.
+\item El array de punteros es m\'as ineficiente (lento) que el primero por 2 razones: hay un nivel de indirecci\'on adicional (hay que dereferenciar el puntero y saltar) y se pierde la localidad.
+\item Cuando un valor de memoria es le\'ido, la CPU se trae todo un bloque contiguo de memoria a su cache. Acceder a valores contiguos en memoria es r\'apido por que todos se encuentran en la cache.
+\item En cambio, leer valores que estan desperdigados por toda la memoria requiere que el CPU se los traiga de a una a la vez.
+\item En la jerga se dice que el primer array es cache friendly.
+}
+
 
 ~% endmacro %~
 

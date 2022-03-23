@@ -1,10 +1,10 @@
 \input{../preamble-tmp.tex}
 
 \title%
-{Memoria en C/C++ - Punteros}
+{Memoria en C++ - Punteros}
 
 
-\subject{Memoria en C/C++ - Punteros}
+\subject{Memoria en C++ - Punteros}
 
 
 \begin{document}
@@ -89,125 +89,6 @@ int cmp_personas(const void* a, const void* b) {
     return pa->edad - pb->edad;
 }
 
-         \end{lstlisting}
-\end{frame}
-
-
-~% if interactive is off %~
-\begin{frame}[fragile]{Como leer la bizarra notaci\'on de punteros en C/C++}
-         \begin{lstlisting}[style=dimmided]
-@/* Ejemplo 1 */
-char *a[10];@@
-      a        // "a"
-     *a        // "a" apunta a
-char *a        // "a" apunta a char
-char *a[10];   // "a" apunta a char (10 de esos)
-
-char *a[10];   // "a" es un array de 10 de esos, o sea
-               // "a" es un array de 10 punteros a char
-@
-         \end{lstlisting}
-\end{frame}
-~% else %~
-\begin{frame}[fragile,t]{Como leer la bizarra notaci\'on de punteros en C/C++}
-         \begin{lstlisting}[style=normal]
-/* Ejemplo 1 */
-char *a[10];
-         \end{lstlisting}
-\end{frame}
-~% endif %~
-
-
-~% if interactive is off %~
-\begin{frame}[fragile]{Como leer la bizarra notaci\'on de punteros en C/C++}
-         \begin{lstlisting}[style=dimmided]
-@/* Ejemplo 2 */
-char (*c)[10];@@
-       c       // "c"
-      *c       // "c" apunta a
-     (*c) == X // llamemos "X" a (*c) temporalmente
-@@
-char X[10];
-char X[10];    // "X" es un char (10 de esos)
-
-char X[10];    // "X" es un array de 10 char
-@@char (*c)[10]; // "c" apunta a un array de 10 char
-@
-         \end{lstlisting}
-\end{frame}
-~% else %~
-\begin{frame}[fragile,t]{Como leer la bizarra notaci\'on de punteros en C/C++}
-         \begin{lstlisting}[style=normal]
-/* Ejemplo 2 */
-char (*c)[10];
-         \end{lstlisting}
-\end{frame}
-~% endif %~
-
-
-~% if interactive is off %~
-\begin{frame}[fragile]{Como leer la bizarra notaci\'on de punteros en C/C++}
-         \begin{lstlisting}[style=dimmided]
-@/* Ejemplo 3: modo dios */
-char (*f)(int)[10];@@
-       f            // "f"
-      *f            // "f" apunta a
-     (*f) == X
-@@
-char X(int)[10];@@
-char X(int)         // es la firma de una funcion,
-                    // asi que vuelvo un paso para atras
-char (*f)(int)      // entonces esto es un puntero a funcion
-                    // cuya firma recibe un int y retorna
-                    // un char
-@@
-char (*f)(int)[10]; // puntero a funcion, 10 de esos
-char (*f)(int)[10]; // f es un array de 10 punteros a funcion,
-                    // que reciben un int y retornan un chars
-@
-         \end{lstlisting}
-\end{frame}
-~% else %~
-\begin{frame}[fragile,t]{Como leer la bizarra notaci\'on de punteros en C/C++}
-         \begin{lstlisting}[style=normal]
-/* Ejemplo 3 */
-char (*f)(int)[10];
-         \end{lstlisting}
-\end{frame}
-~% endif %~
-
-
-% typedef
-\begin{frame}[fragile]{Simplificando la notaci\'on}{}
-         \begin{lstlisting}[style=normal]
-        char *X[10];   // la variable "X" es un array de
-                       // 10 punteros a char
-
-         \end{lstlisting}
-         \begin{lstlisting}[style=normal]
-typedef char *X[10];   // el tipo "X" es un array de
-                       // 10 punteros a char
-
-X my_array;            // es una alias, decir "X" es como decir
-char *my_array[10];    // "array de 10 punteros a char"
-
-         \end{lstlisting}
-\end{frame}
-
-\begin{frame}[fragile]{Simplificando la notaci\'on}{}
-Si quiero una variable que sea un array de punteros a funci\'on que no reciban ni retornen nada?
-         \begin{lstlisting}[style=normal]
-        void (*X)();   // la variable "X" es un puntero a
-                       // funcion
-
-         \end{lstlisting}
-         \begin{lstlisting}[style=normal]
-typedef void (*X)();   // el tipo "X" es un puntero a
-                       // funcion
-
-X f[10];               // f es una array de 10 X, entonces
-                       // f es una array de 10 punteros
-                       // a funcion
          \end{lstlisting}
 \end{frame}
 

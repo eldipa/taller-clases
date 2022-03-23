@@ -1,14 +1,36 @@
 \input{../preamble-tmp.tex}
 
 \title%
-{Memoria en C/C++}
+{Memoria en C++}
 
-\subject{Memoria en C/C++}
+\subject{Memoria en C++}
 
 \begin{document}
 
 \begin{frame}[noframenumbering,plain]
    \titlepage
+\end{frame}
+
+\begin{frame}[fragile]{Qu\'e input es necesario para obtener un "You win!" ?}
+         \begin{lstlisting}[style=normal]
+// compilar con flags:
+//  -Wno-deprecated-declarations -std=c++11 -fno-stack-protector
+#include <cstdio>
+
+int main(int argc, char *argv[]) {
+    int cookie = 0;
+    char buf[10];
+
+    printf("buf: %08x cookie: %08x\n", buf, &cookie);
+    gets(buf);
+
+    if (cookie == 0x41424344) {
+        printf("You win!\n");
+    }
+
+    return 0;
+} // Insecure Programming
+         \end{lstlisting}
 \end{frame}
 
 \begin{frame}{De qu\'e va esto?}
@@ -28,6 +50,9 @@
 ~% from "buffer_overflow.tex" import content as buffer_overflow_content with context %~
 ~{ buffer_overflow_content() }~
 
+~% from "pointers-notation.tex" import content as pointers_notation_content with context %~
+~{ pointers_notation_content() }~
+
 \appendix
 \section<presentation>*{\appendixname}
 \subsection<presentation>*{Referencias}
@@ -46,6 +71,7 @@
          \newblock Addison Wesley, Fourth Edition.
 
          \beamertemplatearticlebibitems
+         % Followed by interesting articles. Keep the list short.
 
       \bibitem{man page: gets strcpy htons qsort}
          man page: gets strcpy htons qsort
@@ -53,7 +79,12 @@
       \bibitem{Insecure Programming}
          Insecure Programming
 
-         % Followed by interesting articles. Keep the list short.
+      \bibitem{https://cdecl.org/}
+          https://cdecl.org/
+
+      \bibitem{https://www.youtube.com/watch?v=tas0O586t80}
+          https://www.youtube.com/watch?v=tas0O586t80
+
 
    \end{thebibliography}
 \end{frame}
