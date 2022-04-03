@@ -17,6 +17,38 @@
    % You might wish to add the option [pausesections]
 \end{frame}
 
+% Open https://www.google.com with the Firefox and sniff with Wireshark (too chatty!)
+%
+% Open https://www.google.com with httpie and sniff (much simpler!)
+%   - show HTML
+%
+% The same but to http:// instead of https://
+%   - show the HTTP protocol is there
+%   - but why we cannot see the HTML in Wireshark? It is compressed!
+%
+% Run nc http://www.google.com  < req
+%   - nc does not know about URLs
+%
+% Run nc www.google.com  http  < req
+%   - it works but a lot of garbage is printed
+%   - netcat does not know how to interpret the response nor how to decompress
+%
+% Patch req and run nc again
+%
+% cat /etc/services and run nc www.google.com 80 < req
+%
+% cat /etc/hosts but www.google.com  is not there!
+% nslookup www.google.com
+%
+% Run nc <IP> 80 < req
+%
+% Run nc <IP2> 80 < req  where <IP2> is like the original IP but
+% *slightly* modified. If it works talk about multiple IPs for the same hostname.
+%   - this is the reason for the loop!
+%
+% Then try <IP2> very different, proving that it is not Google there.
+%
+
 ~% from "stack-web.tex" import content as stackweb_content with context %~
 ~{ stackweb_content() }~
 
