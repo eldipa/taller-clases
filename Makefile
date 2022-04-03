@@ -23,7 +23,7 @@ COMPRESS_LEVEL=ebook
 COMPILE_FLAGS=-output-directory=${TMP} -output-format=pdf
 GS_FLAGS=-sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -r150 -dPDFSETTINGS=/${COMPRESS_LEVEL} -dNOPAUSE -dQUIET -dBATCH
 COMPRESS_FLAGS=-t7z -m0=lzma -mx=9 -mfb=64 -md=128m -ms=on
-PDFNUP_FLAGS=--nup 2x3 --no-landscape --paper letterpaper --frame True
+PDFJAM_FLAGS=--nup 2x3 --no-landscape --paper letterpaper --frame True
 
 MAIN=$(shell basename $(CURDIR))
 
@@ -66,7 +66,7 @@ handout:  _prepare
 	        latex ${COMPILE_FLAGS} '\input{$$iname-tmp}';	\
 	        latex ${COMPILE_FLAGS} '\input{$$iname-tmp}';	\
 	        rm $$iname-tmp.tex;				\
-	        pdfnup ${TMP}/$$iname-tmp.pdf ${PDFNUP_FLAGS} --suffix "handout";		\
+	        pdfjam ${TMP}/$$iname-tmp.pdf ${PDFJAM_FLAGS} --suffix "handout";		\
 	        gs ${GS_FLAGS} -sOutputFile=${TMP}/$$iname-tmp-handout.${COMPRESS_LEVEL}.pdf $$iname-tmp-handout.pdf;	\
 	        rm $$iname-tmp-handout.pdf;		\
 	        mv ${TMP}/$$iname-tmp-handout.${COMPRESS_LEVEL}.pdf $$iname-handout.pdf;	\
