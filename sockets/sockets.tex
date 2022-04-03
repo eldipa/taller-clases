@@ -1,9 +1,9 @@
 \input{../preamble-tmp.tex}
 
 \title%
-{Sockets TCP/IP en C}
+{Sockets TCP/IP en C++}
 
-\subject{Sockets TCP/IP en C}
+\subject{Sockets TCP/IP en C++}
 
 \usepackage{docmute}
 \begin{document}
@@ -17,14 +17,19 @@
    % You might wish to add the option [pausesections]
 \end{frame}
 
+~% from "stack-web.tex" import content as stackweb_content with context %~
+~{ stackweb_content() }~
+
 ~% from "tcp_ip_network_overview.tex" import content as tcpip_content with context %~
 ~{ tcpip_content() }~
 
 ~% from "sockets-tcp.tex" import content as skt_content with context %~
 ~{ skt_content() }~
 
-~% from "protocols.tex" import content as proto_content with context %~
-~{ proto_content() }~
+% ~#
+% ~% from "protocols.tex" import content as proto_content with context %~
+% ~{ proto_content() }~
+% #~
 
 
 \appendix

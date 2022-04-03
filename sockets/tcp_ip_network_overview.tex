@@ -1,10 +1,10 @@
 \input{../preamble-tmp.tex}
 
 \title%
-{Sockets TCP/IP en C - Redes TCP/IP}
+{Sockets TCP/IP en C++ - Redes TCP/IP}
 
 
-\subject{Sockets TCP/IP en C - Redes TCP/IP}
+\subject{Sockets TCP/IP en C++ - Redes TCP/IP}
 
 
 \begin{document}
@@ -15,36 +15,37 @@
 
 ~% macro content() %~
 \section{Redes TCP/IP (simplificado)}
-\begin{frame}[fragile]{Medios compartidos (simplificado)}
-   \begin{columns}
-       \begin{column}{.4\linewidth}
-           \begin{tikzpicture}[remember picture,overlay]
-               \node[anchor=west] {
-                   ~% if interactive is off %~
-                   \includegraphics[width=.98\linewidth]{imgs/shared.png}
-                   ~% else %~
-                   \includegraphics[width=.98\linewidth]{imgs/shared-incomplete.png}
-                   ~% endif %~
-               };
-           \end{tikzpicture}
-       \end{column}
-      \begin{column}{.6\linewidth}
-        \begin{itemize}
-            \item<1-> Los mensajes son recibidos por todos (\textit{shared}).
-            \item<2-> No se requiere hardware adicional en la red.
-            \item<3-> Solo un participante puede hablar a la vez:\\
-                      La performance se degrada a mayor cantidad de participantes.
-        \end{itemize}
-      \end{column}
-   \end{columns}
-\end{frame}
-\note[itemize] {
-\item Dado que el medio es compartido, cuando Alice envia un mensaje este se propaga por toda la red.
-\item El mensaje es recibido entonces por todos los participantes.
-\item Y a la vez evita que otros puedan comunicarse por que el medio esta en uso. Esto se conoce como \textit{half duplex}.
-\item Este tipo de redes requieren un hardware adicional m\'inimo o nulo lo que las hace particularmente baratas y f\'aciles de mantener.
-\item Son para redes locales, como una red Wifi.
-}
+
+%   \begin{frame}[fragile]{Medios compartidos (simplificado)}
+%      \begin{columns}
+%          \begin{column}{.4\linewidth}
+%              \begin{tikzpicture}[remember picture,overlay]
+%                  \node[anchor=west] {
+%                      ~% if interactive is off %~
+%                      \includegraphics[width=.98\linewidth]{imgs/shared.png}
+%                      ~% else %~
+%                      \includegraphics[width=.98\linewidth]{imgs/shared-incomplete.png}
+%                      ~% endif %~
+%                  };
+%              \end{tikzpicture}
+%          \end{column}
+%         \begin{column}{.6\linewidth}
+%           \begin{itemize}
+%               \item<1-> Los mensajes son recibidos por todos (\textit{shared}).
+%               \item<2-> No se requiere hardware adicional en la red.
+%               \item<3-> Solo un participante puede hablar a la vez:\\
+%                         La performance se degrada a mayor cantidad de participantes.
+%           \end{itemize}
+%         \end{column}
+%      \end{columns}
+%   \end{frame}
+%   \note[itemize] {
+%   \item Dado que el medio es compartido, cuando Alice envia un mensaje este se propaga por toda la red.
+%   \item El mensaje es recibido entonces por todos los participantes.
+%   \item Y a la vez evita que otros puedan comunicarse por que el medio esta en uso. Esto se conoce como \textit{half duplex}.
+%   \item Este tipo de redes requieren un hardware adicional m\'inimo o nulo lo que las hace particularmente baratas y f\'aciles de mantener.
+%   \item Son para redes locales, como una red Wifi.
+%   }
 
 \begin{frame}[fragile]{Internet - Protocolo IP (simplificado)}
    \begin{columns}
@@ -115,29 +116,29 @@
 \item TCP no garantiza nada sobre los mensajes, solo sabe de bytes, por lo que un mensaje puede llegar incompleto.
 }
 
-\begin{frame}[fragile]{Internet - Protocolo DNS (simplificado)}
-   \begin{columns}
-       \begin{column}{.4\linewidth}
-           \begin{tikzpicture}[remember picture,overlay]
-               \node[anchor=west] {
-                   ~% if interactive is off %~
-                   \includegraphics[width=.98\linewidth]{imgs/dns.png}
-                   ~% else %~
-                   \includegraphics[width=.98\linewidth]{imgs/dns-incomplete.png}
-                   ~% endif %~
-               };
-           \end{tikzpicture}
-       \end{column}
-      \begin{column}{.6\linewidth}
-        \begin{itemize}
-            \item<1-> No es necesario recordar la direcci\'on IP del destino (4 o 16 bytes) sino su \textit{nombre de dominio}.
-            \item<2-> La registraci\'on de dominios se hace a nivel gubernamental. Para el caso \lstinline[style=normal]!.com.ar! lo hace NIC, Canciller\'ia Argentina.
-            \item<3-> La resoluci\'on de un dominio a una o varias direcciones IP las hace el servidor de DNS.
-            \item<4-> Un dominio puede tener m\'ultiples IPs: por redundancia o por ser IPv4 e IPv6.
-        \end{itemize}
-      \end{column}
-   \end{columns}
-\end{frame}
+%   \begin{frame}[fragile]{Internet - Protocolo DNS (simplificado)}
+%      \begin{columns}
+%          \begin{column}{.4\linewidth}
+%              \begin{tikzpicture}[remember picture,overlay]
+%                  \node[anchor=west] {
+%                      ~% if interactive is off %~
+%                      \includegraphics[width=.98\linewidth]{imgs/dns.png}
+%                      ~% else %~
+%                      \includegraphics[width=.98\linewidth]{imgs/dns-incomplete.png}
+%                      ~% endif %~
+%                  };
+%              \end{tikzpicture}
+%          \end{column}
+%         \begin{column}{.6\linewidth}
+%           \begin{itemize}
+%               \item<1-> No es necesario recordar la direcci\'on IP del destino (4 o 16 bytes) sino su \textit{nombre de dominio}.
+%               \item<2-> La registraci\'on de dominios se hace a nivel gubernamental. Para el caso \lstinline[style=normal]!.com.ar! lo hace NIC, Canciller\'ia Argentina.
+%               \item<3-> La resoluci\'on de un dominio a una o varias direcciones IP las hace el servidor de DNS.
+%               \item<4-> Un dominio puede tener m\'ultiples IPs: por redundancia o por ser IPv4 e IPv6.
+%           \end{itemize}
+%         \end{column}
+%      \end{columns}
+%   \end{frame}
 
 ~% endmacro %~
 

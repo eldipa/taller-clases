@@ -57,29 +57,29 @@
 ~% endif %~
 
 
-\begin{frame}[fragile]{Resoluci\'on de nombres}
-    Cliente
-      \begin{lstlisting}[style=normal]
-memset(&hints, 0, sizeof(struct addrinfo));
-hints.ai_family   = AF_INET;      /* IPv4  */
-hints.ai_socktype = SOCK_STREAM;  /* TCP   */
-hints.ai_flags    = 0;
+%   \begin{frame}[fragile]{Resoluci\'on de nombres}
+%       Cliente
+%         \begin{lstlisting}[style=normal]
+%   memset(&hints, 0, sizeof(struct addrinfo));
+%   hints.ai_family   = AF_INET;      /* IPv4  */
+%   hints.ai_socktype = SOCK_STREAM;  /* TCP   */
+%   hints.ai_flags    = 0;
 
-status = getaddrinfo("fi.uba.ar", "http", &hints, &results);
-      \end{lstlisting}
-    Servidor
-      \begin{lstlisting}[style=normal]
-memset(&hints, 0, sizeof(struct addrinfo));
-hints.ai_family   = AF_INET;      /* IPv4  */
-hints.ai_socktype = SOCK_STREAM;  /* TCP   */
-hints.ai_flags    = AI_PASSIVE;
+%   status = getaddrinfo("fi.uba.ar", "http", &hints, &results);
+%         \end{lstlisting}
+%       Servidor
+%         \begin{lstlisting}[style=normal]
+%   memset(&hints, 0, sizeof(struct addrinfo));
+%   hints.ai_family   = AF_INET;      /* IPv4  */
+%   hints.ai_socktype = SOCK_STREAM;  /* TCP   */
+%   hints.ai_flags    = AI_PASSIVE;
 
-status = getaddrinfo(0 /* ANY */, "http", &hints, &results);
-      \end{lstlisting}
-      \begin{lstlisting}[style=normal]
-freeaddrinfo(results);  // Cliente y Servidor
-      \end{lstlisting}
-\end{frame}
+%   status = getaddrinfo(0 /* ANY */, "http", &hints, &results);
+%         \end{lstlisting}
+%         \begin{lstlisting}[style=normal]
+%   freeaddrinfo(results);  // Cliente y Servidor
+%         \end{lstlisting}
+%   \end{frame}
 
 
 ~% if interactive is off %~
@@ -196,67 +196,67 @@ freeaddrinfo(results);  // Cliente y Servidor
 \item De igual modo, no todo lo enviado sera recibido en una \'unica llamada a \lstinline[style=normal]!recv!: el programador debera hacer m\'ultiples llamadas a \lstinline[style=normal]!recv!.
 }
 
-\begin{frame}[fragile]{Envio y recepci\'on de datos}
-      \begin{lstlisting}[style=normal]
-int s = send(skt,
-              buf,
-              bytes_to_sent,
-              flags           // MSG_NOSIGNAL
-            );
+%   \begin{frame}[fragile]{Envio y recepci\'on de datos}
+%         \begin{lstlisting}[style=normal]
+%   int s = send(skt,
+%                 buf,
+%                 bytes_to_sent,
+%                 flags           // MSG_NOSIGNAL
+%               );
 
-int s = recv(skt,
-              buf,
-              bytes_to_recv,
-              flags           // 0
-            );
+%   int s = recv(skt,
+%                 buf,
+%                 bytes_to_recv,
+%                 flags           // 0
+%               );
 
-  (s == -1)  // Error inesperado, ver errno
-   (s == 0)  // El socket fue cerrado
-    (s > 0)  // Ok: s bytes fueron enviados/recibidos
-      \end{lstlisting}
-\end{frame}
+%     (s == -1)  // Error inesperado, ver errno
+%      (s == 0)  // El socket fue cerrado
+%       (s > 0)  // Ok: s bytes fueron enviados/recibidos
+%         \end{lstlisting}
+%   \end{frame}
 ~% endif %~
 
-\begin{frame}[fragile]{recvall: recepci\'on de N bytes exactos}
-      \begin{lstlisting}[style=normal]
-char buf[MSG_LEN];  // buffer donde guardar los datos
-int bytes_recv = 0;
+%   \begin{frame}[fragile]{recvall: recepci\'on de N bytes exactos}
+%         \begin{lstlisting}[style=normal]
+%   char buf[MSG_LEN];  // buffer donde guardar los datos
+%   int bytes_recv = 0;
 
-while (MSG_LEN > bytes_recv && skt_still_open) {
-  s = recv(skt, &buf[bytes_recv], MSG_LEN - bytes_recv,
-                                                0);
-  if (s == -1) { // Error inesperado, ver errno
-     /* ... */
-  }
-  else if (s == 0) { // Nos cerraron el socket
-     /* ... */
-  }
-  else {
-    bytes_recv += s;
-  }
-}
-      \end{lstlisting}
-\end{frame}
-\begin{frame}[fragile]{sendall: env\'io de N bytes exactos}
-      \begin{lstlisting}[style=normal]
-char buf[MSG_LEN];    // buffer con los datos a enviar
-int bytes_sent = 0;
+%   while (MSG_LEN > bytes_recv && skt_still_open) {
+%     s = recv(skt, &buf[bytes_recv], MSG_LEN - bytes_recv,
+%                                                   0);
+%     if (s == -1) { // Error inesperado, ver errno
+%        /* ... */
+%     }
+%     else if (s == 0) { // Nos cerraron el socket
+%        /* ... */
+%     }
+%     else {
+%       bytes_recv += s;
+%     }
+%   }
+%         \end{lstlisting}
+%   \end{frame}
+%   \begin{frame}[fragile]{sendall: env\'io de N bytes exactos}
+%         \begin{lstlisting}[style=normal]
+%   char buf[MSG_LEN];    // buffer con los datos a enviar
+%   int bytes_sent = 0;
 
-while (MSG_LEN > bytes_sent && skt_still_open) {
-  s = send(skt, &buf[bytes_sent], MSG_LEN - bytes_sent,
-                                              MSG_NOSIGNAL);
-  if (s == -1) { // Error inesperado, ver errno
-     /* ... */
-  }
-  else if (s == 0) { // Nos cerraron el socket
-     /* ... */
-  }
-  else {
-    bytes_sent += s;
-  }
-}
-      \end{lstlisting}
-\end{frame}
+%   while (MSG_LEN > bytes_sent && skt_still_open) {
+%     s = send(skt, &buf[bytes_sent], MSG_LEN - bytes_sent,
+%                                                 MSG_NOSIGNAL);
+%     if (s == -1) { // Error inesperado, ver errno
+%        /* ... */
+%     }
+%     else if (s == 0) { // Nos cerraron el socket
+%        /* ... */
+%     }
+%     else {
+%       bytes_sent += s;
+%     }
+%   }
+%         \end{lstlisting}
+%   \end{frame}
 
 ~% if interactive is off %~
 \subsection{Finalizaci\'on de un canal}
@@ -306,23 +306,23 @@ while (MSG_LEN > bytes_sent && skt_still_open) {
 \end{frame}
 ~% endif %~
 
-\begin{frame}[fragile]{TIME WAIT -> Reuse Address}
-Si el puerto 80 esta en el estado TIME WAIT, esto termina en error (Address Already in Use):
-      \begin{lstlisting}[style=normal]
-int acep   = socket(...);
-int status = bind(acep, ...); //bind al puerto 80
-      \end{lstlisting}
-\pause
-La soluci\'on es configurar al socket aceptador para que pueda reusar la direcci\'on:
-      \begin{lstlisting}[style=normal]
-int acep   = socket(...);
+%   \begin{frame}[fragile]{TIME WAIT -> Reuse Address}
+%   Si el puerto 80 esta en el estado TIME WAIT, esto termina en error (Address Already in Use):
+%         \begin{lstlisting}[style=normal]
+%   int acep   = socket(...);
+%   int status = bind(acep, ...); //bind al puerto 80
+%         \end{lstlisting}
+%   \pause
+%   La soluci\'on es configurar al socket aceptador para que pueda reusar la direcci\'on:
+%         \begin{lstlisting}[style=normal]
+%   int acep   = socket(...);
 
-int val = 1;
-setsockopt(acep, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
+%   int val = 1;
+%   setsockopt(acep, SOL_SOCKET, SO_REUSEADDR, &val, sizeof(val));
 
-int status = bind(acep, ...); //bind al puerto 80
-      \end{lstlisting}
-\end{frame}
+%   int status = bind(acep, ...); //bind al puerto 80
+%         \end{lstlisting}
+%   \end{frame}
 
 
 
