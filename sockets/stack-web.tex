@@ -1,0 +1,101 @@
+
+%diferencia entre texto y binario
+%bin / text
+%prefix / delim
+\input{../preamble-tmp.tex}
+
+\title%
+{Sockets TCP/IP en C++ - Stack Web}
+
+
+\subject{Sockets TCP/IP en C++ - Stack Web}
+
+
+\begin{document}
+
+% firefox + wireshark
+%
+% httpie -b https://www.google.com
+% httpie -b http://www.google.com
+% httpie -v http://www.google.com
+%
+% netcat www.google.com http < REQ
+%
+% nslookup www.google.com
+%
+% netcat IP 80 < REQ
+
+~% macro content() %~
+\section{Stack Web}
+\subsection*{}
+\begin{frame}[fragile]{Stack Web (simplificado)}
+         \begin{tikzpicture}[cell/.style={rectangle,draw=black},
+            space/.style={minimum height=1.5em,matrix of nodes,row sep=-\pgflinewidth,column sep=-\pgflinewidth,column 1/.style={font=\ttfamily}},text depth=0.5ex,text height=2ex,nodes in empty cells]
+
+            \matrix (first)[space, column 1/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=12em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}]
+            {
+               {\visible<6->{}}             & {\visible<6->{...}} \\
+               {\visible<6->{firefox}}      & {\visible<6->{HTML / CSS / JS}}  \\
+               {\visible<5->{httpie}}       & {\visible<5->{HTTP}}   \\
+               {\visible<4->{}}             & {\visible<4->{TLS}} \\
+               {\visible<3->{netcat/OS}}    & {\visible<3->{TCP}} \\
+               {\visible<2->{OS}}           & {\visible<2->{IP}} \\
+               {\visible<2->{}}             & {\visible<2->{...}} \\
+               {\visible<1->{HW}}           & {\visible<1->{Maxwell's eq}} \\
+            };
+         \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item Nuestras comunicaciones se basana en las leyes de la f\'isicas descriptas por las ecuaciones de Maxwell.
+\item Trabajar con campos electromagneticos es trabajo del hardware. Sobre \'el el sistema operativo resuelve el ruteo por la red IP y el transporte de los datos via TCP.
+\item TCP esta en el l\'imite entre las aplicaciones de user (\lstinline[style=normal]!netcat! y otros) y el OS: mientras que el OS implementa el protocolo TCP, la aplicaci\'on de user la usa.
+\item TLS se usa para aut\'enticas y encriptar las comunicaciones (SSL fue su antecesor). Aunque es opcional, muchas aplicaciones hoy usan TLS y as\'i deber\'ia ser.
+\item \lstinline[style=normal]!httpie! (\lstinline[style=normal]!curl!, \lstinline[style=normal]!wget!, \lstinline[style=normal]!aria2!) son capaces de comunicarse con servidores y hablar HTTP aunque la interpretaci\'on del contenido (HTML, CSS) es limitada o nula.
+\item No tomes este diagrama literal: es una versi\'on simplificada.
+}
+
+\begin{frame}[fragile]{Resolucion de nombres (simplificado)}
+         \begin{tikzpicture}[cell/.style={rectangle,draw=black},
+            space/.style={minimum height=1.5em,matrix of nodes,row sep=-\pgflinewidth,column sep=-\pgflinewidth,column 1/.style={font=\ttfamily}},text depth=0.5ex,text height=2ex,nodes in empty cells]
+
+            \matrix (first)[space, column 1/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=12em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}]
+            {
+               {\visible<4->{nslookup}}     & {\visible<4->{DNS}} \\
+               {\visible<3->{nslookup/OS}}  & {\visible<3->{UDP}} \\
+               {\visible<2->{OS}}           & {\visible<2->{IP}} \\
+               {\visible<2->{}}             & {\visible<2->{...}} \\
+               {\visible<1->{HW}}           & {\visible<1->{Maxwell's eq}} \\
+            };
+         \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item Resolver un service name a un puerto es f\'acil. Los servicios est\'andar son pocos y no cambian, un archvio con el mapping alcanza (\lstinline[style=normal]!/etc/services!)
+\item Resolver un hostname a una IP es mucho m\'as complicado, un archivo (\lstinline[style=normal]!/etc/hosts!) no es lo suficientemente din\'amico.
+\item El protocolo DNS se encarga de resolver un hostname a una direccion IPv4 o IPv6.
+\item Al igual que con TCP, UDP est\'a en el l\'imite entre aplicaciones de user (\lstinline[style=normal]!nslookup!) y el OS.
+}
+
+\begin{frame}[fragile]{TP de Taller (simplificado)}
+         \begin{tikzpicture}[cell/.style={rectangle,draw=black},
+            space/.style={minimum height=1.5em,matrix of nodes,row sep=-\pgflinewidth,column sep=-\pgflinewidth,column 1/.style={font=\ttfamily}},text depth=0.5ex,text height=2ex,nodes in empty cells]
+
+            \matrix (first)[space, column 1/.style={font=\ttfamily},column 2/.style={nodes={cell,minimum width=12em}},column 3/.style={nodes={cell,minimum width=2em}},column 4/.style={nodes={cell,minimum width=2em}},column 5/.style={nodes={cell,minimum width=2em}}]
+            {
+               {\visible<1->{taller}}       & {\visible<1->{...}} \\
+               {\visible<1->{taller/OS}}    & {\visible<1->{TCP}} \\
+               {\visible<1->{OS}}           & {\visible<1->{IP}} \\
+               {\visible<1->{}}             & {\visible<1->{...}} \\
+               {\visible<1->{HW}}           & {\visible<1->{Maxwell's eq}} \\
+            };
+         \end{tikzpicture}
+\end{frame}
+\note[itemize] {
+\item A grandes rasgos es sobre TCP/UDP donde nos paramos y desarrollamos el TP en Taller.
+}
+
+
+~% endmacro %~
+
+~{ content() }~
+
+\end{document}
