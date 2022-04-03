@@ -11,6 +11,11 @@
    \titlepage
 \end{frame}
 
+% Present the following BO code but without talking about how the BO works.
+% Ask: is it possible to print you win? Very likely they are going to answer no.
+% Show that a crafted input indeed gets the you win but do not explain it, leave
+% it as an unknown.
+% Have a break and then continue with the class without explaining the BO
 \begin{frame}[fragile]{Qu\'e input es necesario para obtener un "You win!" ?}
          \begin{lstlisting}[style=normal]
 // compilar con flags:
@@ -41,14 +46,35 @@ int main(int argc, char *argv[]) {
 ~% from "align_size.tex" import content as align_size_content with context %~
 ~{ align_size_content() }~
 
+% Before continuing ask, "why C/C++?" - Very likely the answer will be "speed"
+% Show the java_faster_than_c/contar_primos code and show that C is not necessary fast.
+% But also show java_faster_than_c/max_segmento ans show that C and Java
+% converges to the same run-time. Why is Java getting slower?
+% Don't answer and keep the class.
+
 ~% from "segments.tex" import content as segments_content with context %~
 ~{ segments_content() }~
+
+% In the last slide of segments_content there is an explanation of
+% cache friendly structures. Combine this and explain java_faster_than_c.
 
 ~% from "pointers.tex" import content as pointers_content with context %~
 ~{ pointers_content() }~
 
+% Now we have all the needed tools to understand a BO: memory segment (stack),
+% padding, sizes and endianness. Go for it and explain it!
+
 ~% from "buffer_overflow.tex" import content as buffer_overflow_content with context %~
 ~{ buffer_overflow_content() }~
+
+% The last slide shows a BO that requires smashing the stack further,
+% in particular to change the argument of the print from "you loose" to "you win"
+% Ask how (they should say the string cannot be changed (code segment)
+% but the pointer to the string can (stack) and point to the overflowed buffer.
+% Explain now that if the printf() would be a system() you would have full
+% control of the machine.
+
+% Pointers notation is optional. Ask if they want it or not.
 
 ~% from "pointers-notation.tex" import content as pointers_notation_content with context %~
 ~{ pointers_notation_content() }~
