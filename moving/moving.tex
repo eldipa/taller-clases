@@ -37,6 +37,13 @@
 ~% from "assign.tex" import content as assign_content with context %~
 ~{ assign_content() }~
 
+\begin{frame}[fragile]{Take home message}{}
+   \begin{itemize}
+       \item<1-> En el 99\% de los casos, no queres que tus clases sean copiables (sea por que no tiene sentido o por performance). Deshabilitar el constructor y operado asignaci\'on por copia.
+       \item<2-> Implementar siempre move semantics (constructor y operador asignaci\'on).
+      \item<3-> Usar const en donde sea posible.
+   \end{itemize}
+\end{frame}
 
 \appendix
 \section<presentation>*{\appendixname}

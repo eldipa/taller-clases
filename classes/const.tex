@@ -2,9 +2,9 @@
 \input{../preamble-tmp.tex}
 
 \title%
-{Clases en C++ - Const}
+{Clases en C++ - Const y Member Initialization List}
 
-\subject{Clases en C++ - Const}
+\subject{Clases en C++ - Const y Member Initialization List}
 
 \begin{document}
 
@@ -121,7 +121,7 @@ struct Vector {
 \item \lstinline[style=normal]!const int * p! se lee como "\lstinline[style=normal]!p! es un puntero; a \lstinline[style=normal]!int!; constante" mientras que \lstinline[style=normal]!int * const p! se lee como "\lstinline[style=normal]!p! es constante; puntero; a \lstinline[style=normal]!int!". El primero apunta a \lstinline[style=normal]!int!s constantes mientras que el segundo es el puntero quien es constante.
 }
 
-\subsection{Initialization}
+\subsection{Member Initialization List}
                    ~% if interactive is off %~
 \begin{frame}[fragile]{Member Initialization List}
         \begin{lstlisting}[style=normal,firstnumber=1,linebackgroundcolor={%
@@ -233,32 +233,32 @@ struct DoubleVector {
 \item La member initialization list es el \'unico lugar para inicializar atributos que son objetos que no tienen un constructor por default o sin par\'ametros.
 }
 
-\begin{frame}[fragile]{Delegating constructors}
-    \begin{lstlisting}[style=normal,firstnumber=1]
-struct DoubleVector {
-  DoubleVector(int size) : fg(size), bg(size) { }
+%   \begin{frame}[fragile]{Delegating constructors}
+%       \begin{lstlisting}[style=normal,firstnumber=1]
+%   struct DoubleVector {
+%     DoubleVector(int size) : fg(size), bg(size) { }
 
-  DoubleVector(int size, int val) : fg(size), bg(size) {
-      for (int i = 0; i < size; ++i) {
-          fg.set(i, val);
-          bg.set(i, val);
-      }
-        \end{lstlisting}
-        \pause
-    \begin{lstlisting}[style=normal,firstnumber=1]
-struct DoubleVector {
-  DoubleVector(int size) : fg(size), bg(size) { }
+%     DoubleVector(int size, int val) : fg(size), bg(size) {
+%         for (int i = 0; i < size; ++i) {
+%             fg.set(i, val);
+%             bg.set(i, val);
+%         }
+%           \end{lstlisting}
+%           \pause
+%       \begin{lstlisting}[style=normal,firstnumber=1]
+%   struct DoubleVector {
+%     DoubleVector(int size) : fg(size), bg(size) { }
 
-  DoubleVector(int size, int val) : DoubleVector(size) {
-      for (int i = 0; i < size; ++i) {
-          fg.set(i, val);
-          bg.set(i, val);
-      }
-        \end{lstlisting}
-\end{frame}
-\note[itemize] {
-\item La member initialization list permite llamar a otro constructor para delegarle parte de la construcci\'on del objeto. Esto permite reutilizar c\'odigo entre los constructores.
-}
+%     DoubleVector(int size, int val) : DoubleVector(size) {
+%         for (int i = 0; i < size; ++i) {
+%             fg.set(i, val);
+%             bg.set(i, val);
+%         }
+%           \end{lstlisting}
+%   \end{frame}
+%   \note[itemize] {
+%   \item La member initialization list permite llamar a otro constructor para delegarle parte de la construcci\'on del objeto. Esto permite reutilizar c\'odigo entre los constructores.
+%   }
 
 
 ~% endmacro %~
