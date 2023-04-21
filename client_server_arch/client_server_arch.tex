@@ -1,9 +1,9 @@
-\input{../preamble.tex}
+\input{../preamble-tmp.tex}
 
 \title%
-{Servidores multi-cliente (draft)}
+{Arquitectura multithreading}
 
-\subject{Servidores multi-cliente (draft)}
+\subject{Arquitectura multithreading}
 
 \begin{document}
 
@@ -34,7 +34,703 @@
    \titlepage
 \end{frame}
 
+\section{??}
+\begin{frame}[fragile]{Caso 1: obtener 1 p\'agina web (sync)}{}
+Imaginate un programa de l\'inea de comandos que descarga una \'unica p\'agina web como lo
+son \lstinline[style=normal]!httpie!, \lstinline[style=normal]!wget! o \lstinline[style=normal]!curl!
+\begin{lstlisting}[style=normalnonumbers]
+void fetch_web_page(url) {
+  send_request_web_page(url);
+  page = recv_web_page();
 
+  save(page, url);
+}
+\end{lstlisting}
+\begin{itemize}
+    \item Que operaciones son \textbf{bloqueantes}?
+    \item Mientras el thread est\'a bloqueado, que se podr\'ia hacer en el \textbf{mientras tanto}?
+\end{itemize}
+\end{frame}
+\note[itemize] {
+\item Las operaciones bloqueantes de este (pseudo) c\'odigo son \lstinline[style=normal]!send!, \lstinline[style=normal]!recv! y \lstinline[style=normal]!save!.
+\item No se puede hacer nada mientras se envia el request ni tampoco mientras se espera la p\'agina web.
+\item En ambos casos esta perfecto que el thread se bloquee ya que no hay nada que se pueda hacer concurrentemente (aka, "en el mientras tanto")
+\item Cuando un programa hace un pedido y no avanza hasta no obtener una respuesta se dice que \textbf{la comunicaci\'on es sincr\'onica}.
+\item Comunicaci\'on sincr\'onica es ineficiente (no aprovechas los tiempos muertos) pero muy f\'acil de usar y esta presente en todos lados.
+\item Por ejemplo cuando haces un \lstinline[style=normal]!file.read()! estas haciendo un pedido al OS y tu programa no continua hasta no obtener una respuesta. Es una comunicaci\'on sincr\'onica con el OS.
+}
+
+
+\begin{frame}[fragile]{Caso 2: web scrawler (sync)}{}
+Imaginate que ahora tenes un web scrawler: un programa de se descarga todo un sitio
+web.
+\begin{lstlisting}[style=normalnonumbers]
+void download_web_site(urls) {
+  for (url in urls) {
+    fetch_web_page(url);
+  }
+}
+\end{lstlisting}
+
+Y ahora?
+
+\begin{itemize}
+    \item Que operaciones son \textbf{bloqueantes}?
+    \item Mientras el thread est\'a bloqueado, que se podr\'ia hacer en el \textbf{mientras tanto}?
+\end{itemize}
+\end{frame}
+\note[itemize] {
+\item La comunicaci\'on es sincr\'onica nos fuerza a descargar de a una p\'agina a la vez: \textbf{secuencial y lento}.
+   \item Es muy probable que ni la red ni el servidor esten saturados y podr\'ian permitir m\'as tr\'afico.
+   \item Lease se deber\'ia poder enviar m\'as requests y recibir m\'as p\'aginas web en \textbf{paralelo}.
+}
+
+
+\begin{frame}[fragile]{Caso 3: web scrawler (sync + threads)}{}
+    \begin{columns}[T]
+      \begin{column}{.55\linewidth}
+\begin{lstlisting}[style=normalnonumbers]
+void download_web_site(urls) {
+  std::list<Fetcher*> threads;
+
+  for (url in urls) {
+    th = new Fetcher(url);
+    th->start();
+
+    threads.push_back(th);
+  }
+  // hacer joins de los threads
+}
+\end{lstlisting}
+      \end{column}
+      \begin{column}{.45\linewidth}
+\begin{lstlisting}[style=normalnonumbers]
+struct Fetcher: public Thread {
+  Socket skt;
+  void run() {
+    fetch_web_page(this->url);
+  }
+}
+\end{lstlisting}
+      \end{column}
+      \end{columns}
+\end{frame}
+\note[itemize] {
+   \item Se hacen varias descargas en paralelo por lo que es mejor q la versi\'on secuencial.
+   \item \textbf{Pero} se fuerza a que cada \lstinline[style=normal]!Fetcher! tenga \textbf{su propio socket} (de otro modo habr\'ia una RC sobre el socket compartido) lo que implica tener \textbf{m\'ultiples conexiones}.
+   \item Establecer muchas conexiones es costoso: el OS tiene un \textbf{m\'aximo de conexiones posibles} y el servidor puede imponernos tambi\'en un l\'imite.
+   \item Lanzar muchos threads tambi\'en tiene un \textbf{costo en memoria}: recordar que cada thread tiene su propio stack y eso requiere memoria.
+}
+
+\begin{frame}{}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[at=(current page.center)] {
+            \includegraphics<1>[width=0.6\columnwidth]{diagrams/caso-3.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}[fragile]{Caso 4: web scrawler (sync + workers)}{}
+    \begin{columns}[T]
+      \begin{column}{.55\linewidth}
+\begin{lstlisting}[style=normalnonumbers]
+void download_web_site(urls) {
+  // creamos el pool de workers
+  std::vector<Fetcher*> workers(N);
+  for (int i = 0; i < N; i++) {
+    workers[i] = new Fetcher(q);
+    workers[i]->start();
+  }
+
+  // cargamos la queue,
+  // cada worker ira tomando
+  // una url y la procesara
+  for (url in urls) {
+    q.push(url);
+  }
+
+  // hacer joins de los threads
+}
+\end{lstlisting}
+      \end{column}
+      \begin{column}{.45\linewidth}
+\begin{lstlisting}[style=normalnonumbers]
+struct Fetcher:public Thread {
+  Socket skt;
+  Queue q;
+
+  void run() {
+    while (...) {
+      url = q.pop()
+      fetch_web_page(url);
+    }
+  }
+}
+\end{lstlisting}
+      \end{column}
+      \end{columns}
+
+\end{frame}
+\note[itemize] {
+\item Se hacen varias descargas en paralelo pero hay un \textbf{l\'imite autoimpuesto de N threads}: se requiere N sockets distintos con N conexiones distintas.
+\item Los threads que esperan por una tarea, la resuelven y vuelven a esperar son llamados \textbf{workers}. En este caso todos los workers hacen la misma tarea (fetchear una p\'agina web) pero podr\'ia no ser asi. Podr\'ian recibir \textbf{objetos polim\'orficos}.
+\item Cada worker toma de \textbf{la misma queue compartida} una task (url) y la procesa tan r\'apido como puede (hay un balanceo natural de trabajo entre los workers).
+\item Un grupo de thread workers se lo conoce como \textbf{pool de workers}. T\'ipicamente son N threads pre-creados aunque en ocaciones se hace el N variable.
+\item Un pool de workers se usa cuando se quieren hacer tareas en background \textbf{pero} para enviar/recibir datos tienen un par de issues.
+\item Con N threads, habra a lo sumo N sends / recvs paralelos y \textbf{puede que la red quede poco usada} (o sea, podr\'iamos enviar/recibir mucha mas data por la red) o el \textbf{servidor quede sub-usado} (podr\'ia manejar muchos m\'as pedidos dentro de una misma conexi\'on).
+}
+
+\begin{frame}{}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[at=(current page.center)] {
+            \includegraphics<1>[width=0.6\columnwidth]{diagrams/caso-4.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}[fragile]{Caso 5: web scrawler (async)}{}
+    \begin{columns}[T]
+      \begin{column}{.55\linewidth}
+\begin{lstlisting}[style=normalnonumbers]
+void download_web_site(urls) {
+  Socket skt(...); // 1 conexion
+
+  req_th = new Requester(
+                    requests_q, skt)
+  rec_th = new Receiver(
+                    responses_q, skt)
+
+  // hacer los starts
+
+  for (url in urls) {
+      requests_q.push(url);
+  }
+
+  for (url in urls) {
+      page = responses_q.pop();
+      save(page, url);
+  }
+
+  // hacer los joins
+}
+\end{lstlisting}
+      \end{column}
+      \begin{column}{.50\linewidth}
+\begin{lstlisting}[style=normalnonumbers]
+struct Requester:public Thread {
+  Socket& skt;
+  void run() {
+    while (...) {
+      url = q.pop();
+      send_request_web_page(url);
+    }
+  }
+}
+
+struct Receiver:public Thread {
+  Socket& skt;
+  void run() {
+    while (...) {
+      page = recv_web_page();
+      q.push(page);
+    }
+  }
+}
+\end{lstlisting}
+      \end{column}
+    \end{columns}
+
+\end{frame}
+\note[itemize] {
+\item Los threads que s\'olo se dedican a enviar y a recibir datos se los llaman \textbf{threads de comunicaci\'on}.
+\item Al tener un \'unico thread que envia, este estar\'a enviando data tan r\'apido como es posible, \textbf{hasta el punto de o saturar la red o saturar el servidor} (lo que primero suceda). Lo mismo pasa con el otro thread.
+\item Poner mas threads en paralelo para enviar/recibir \textbf{no} mejorar\'a la situaci\'on aunque hay 2 excepciones.
+\item Podr\'ia pasar que la red y el servidor tienen \textbf{mucha} capacidad y el thread de comunicaci\'on llegue a un tope \textbf{antes} de saturarlos. \textbf{Ahi tu CPU es el factor limitante} y si tenes mas cores poner otro thread mejorar\'ia la performance. En la pr\'actica 99\% de las veces \textbf{nunca} se da este caso (tu CPU es mucho m\'as r\'apida).
+\item Podr\'ia pasar que el servidor te imponga un l\'imite en la transferencia por conexi\'on (bandwidth). Tener m\'ultiples threads implica m\'ultiples conexiones y mejorar\'ia la perforamnce (usarias N threads de comunicaci\'on como lo viste en el pool de workers). \lstinline[style=normal]!aria2c! usa esta estrategia. Ojo que los servidores puede \textbf{no gustarle esto} y pueden bannearte ya que en escencia estas "sorteando" un l\'imite impuesto por ellos.!
+\item Hay RC sobre \lstinline[style=normal]!skt! \textbf{compartido}? \textbf{No}. Podes hacer sends en \textbf{un solo thread} y recvs en \textbf{otro solo thread} (m\'as de 1 thread y tendras RC)
+}
+
+\begin{frame}{}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[at=(current page.center)] {
+            \includegraphics<1>[width=0.6\columnwidth]{diagrams/caso-5.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}[plain,c]
+    %\frametitle{A first slide}
+
+    \begin{center}
+        \Huge Viste el deadlock?
+    \end{center}
+
+\end{frame}
+
+\begin{frame}[fragile]{Ves el deadlock?}{}
+    \begin{columns}[T]
+      \begin{column}{.55\linewidth}
+\begin{lstlisting}[style=normalnonumbers,linebackgroundcolor={%
+                 \btLstHLB<1-6>{9-11}%
+                 \btLstHLR<6>{9-11}%
+                 }]
+void download_web_site(urls) {
+  req_th = new Requester(
+                    requests_q, skt)
+  rec_th = new Receiver(
+                    responses_q, skt)
+
+  // hacer los starts
+
+  for (url in urls) {
+      requests_q.push(url);
+  }
+
+  for (url in urls) {
+      page = responses_q.pop();
+      save(page, url);
+  }
+
+  // hacer los joins
+}
+\end{lstlisting}
+      \end{column}
+      \begin{column}{.50\linewidth}
+\begin{lstlisting}[style=normalnonumbers,linebackgroundcolor={%
+                 \btLstHLB<2>{5-6}%
+                 \btLstHLB<3>{5-6,15-16}%
+                 \btLstHLR<4>{15-16}%
+                 \btLstHLR<5->{5-6,15-16}%
+                 }]
+struct Requester:public Thread {
+  Socket& skt;
+  void run() {
+    while (...) {
+      url = q.pop();
+      send_request_web_page(url);
+    }
+  }
+}
+
+struct Receiver:public Thread {
+  Socket& skt;
+  void run() {
+    while (...) {
+      page = recv_web_page();
+      q.push(page);
+    }
+  }
+}
+\end{lstlisting}
+      \end{column}
+    \end{columns}
+
+\end{frame}
+\note[itemize] {
+\item El thread principal pushea las urls (1) que son pop'eadas por el \lstinline[style=normal]!Requester! quien envia a su ves los requests (2).
+\item El servidor acepta y procesa los requests y envia las respuestas. El \lstinline[style=normal]!Receiver! las recibe y las pushea a la otra queue (3).
+\item \textbf{Pero,} el thread principal sigue pusheando urls y \textbf{no} esta haciendo ningun pop (4).
+\item \lstinline[style=normal]!responses_q! eventualmente se llenara, el push se bloqueara y el \lstinline[style=normal]!Receiver! dejara de leer del socket (5).
+\item Eventualmente los buffers del servidor se llenaran y este dejara de enviar respuestas y de aceptar nuevos requests.
+\item El \lstinline[style=normal]!Requester! entonces se bloquera en el send y dejara de pop'ear urls (6) lo que hara que \lstinline[style=normal]!requests_q! se llene y el main se bloque (7).
+\item Soluci\'on? O el main balancea algunos push con algunos pop o los pops los hace otro thread.
+\item Otra opci\'on ser\'ia usar \lstinline[style=normal]!UnboundedQueues!: el deadlock te\'orico seguir\'ia ahi pero si la cantidad de urls no es infinita, las queue "nunca" se llenar\'ia ni los push se bloquear\'ian.
+\item La moraleja es que \textbf{es dif\'icil} dise\~nar una arquitectura robusta, performante y libre de bugs: \textbf{la simplicidad es tu aliada}.
+}
+
+\begin{frame}[fragile]{Caso 6: cliente de chat (sync)}{}
+Imaginate un programa con interfaz gr\'afica para chat
+\begin{lstlisting}[style=normalnonumbers]
+void main() {
+  while (not quit) {
+    msj = read_from_keyboard();
+    if (msj) {
+      send_my_message(msj);
+    }
+
+    msj = recv_theirs_messages();
+    draw(msj);
+  }
+}
+\end{lstlisting}
+
+\begin{itemize}
+    \item Que operaciones son \textbf{bloqueantes}?
+    \item Mientras el thread est\'a bloqueado, que se podr\'ia hacer en el \textbf{mientras tanto}?
+\end{itemize}
+\end{frame}
+\note[itemize] {
+\item \lstinline[style=normal]!read_from_keyboard! puede bloquearse asi como \lstinline[style=normal]!send_my_message! y \lstinline[style=normal]!recv_theirs_message! (podemos suponer que el \lstinline[style=normal]!draw! es r\'apido y no bloqueante).
+\item Deber\'iamos poder \textbf{recibir} los mensajes aun cuando no enviemos ninguno nosotros!
+\item Deber\'iamos poder \textbf{enviar} nuestros mensajes aun cuando nadie nos escriba a nosotros!
+\item En resumen: el recibir y enviar \textbf{no estan correlacionados}
+}
+
+\begin{frame}[fragile]{Caso 7: cliente de chat (async + bug)}{}
+\begin{lstlisting}[style=normalnonumbers]
+void main() {
+  while (not quit) {
+    msj = non_blocking_read_from_keyboard();
+    if (msj) {
+      sender_q.push(msj);
+    }
+
+    msj = receiver_q.try_pop();
+    draw(msj);
+  }
+}
+\end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item Tendremos 2 threads de comunicaci\'on. El \lstinline[style=normal]!main! pushea los mensajes a la \lstinline[style=normal]!sender_q! para que un thread lo envie por la red; el \lstinline[style=normal]!main! saca de la queue \lstinline[style=normal]!receiver_q! los mensajes recibidos por el otro thread.
+\item Podr\'iamos usar el mismo truco para la lectura del teclado (tendr\'iamos un thread q se bloquea en el \lstinline[style=normal]!read_from_keyboard! y nos pushea los mensajes mientras que \lstinline[style=normal]!main! los saca \textbf{pero...}
+\item Casi todas las librer\'ias gr\'aficas exigen que su c\'odigo sea llamado \textbf{expl\'icivamente desde el thread principal}.
+\item Por suerte estas librer\'ias ofrecen ademas versiones \textbf{no-bloqueantes}: \lstinline[style=normal]!non_blocking_read_from_keyboard!
+\item Ahora \lstinline[style=normal]!main! \textbf{no tiene ninguna operaci\'on bloqueante} por lo que se transform\'o en un un \textbf{busy loop} (y nos va a quemar la CPU). Hay q arreglarlo.
+}
+
+\begin{frame}[fragile]{Caso 8: cliente de chat (async)}{}
+\begin{lstlisting}[style=normalnonumbers]
+void main() {
+  while (not quit) {
+    msj = non_blocking_read_from_keyboard();
+    if (msj) {
+      sender_q.push(msj);
+    }
+
+    while (msj = receiver_q.try_pop()) {
+      draw(msj);
+    }
+
+    sleep(1/30); // fix me
+  }
+}
+\end{lstlisting}
+\end{frame}
+\note[itemize] {
+\item El loop del \lstinline[style=normal]!main! trabaja 30 veces por segundo o \textbf{30 frames por segundo (FPS)}. En la pr\'actica hardcodear un \lstinline[style=normal]!1/30! es \textbf{mala idea}.
+\item Cuanto dormir con el \lstinline[style=normal]!sleep! \textbf{debe ser ajustado en cada iteracion} para \textbf{compensar defasajes} y asi mantener un \textbf{FPS relativamente constante}.
+\item Esto esta explicado con detalle en este post: \url{https://book-of-gehn.github.io/articles/2019/10/23/Constant-Rate-Loop.html}
+\item Ahora que le pusimos un freno al busy loop, que pasa si nos envian 300 mensajes? Si hacemos \textbf{un \'unico} \lstinline[style=normal]!try_pop! \textbf{por ciclo} tardar\'iamos 300 * 1/30 = 10 segundos en verlos!
+\item Nada nos obliga a sacar de \lstinline[style=normal]!receiver_q! de aun mensaje por ciclo: lo que hacemos entonces es \textbf{sacar todos} los mensajes hasta q la queue quede vac\'ia.
+}
+
+\begin{frame}{}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[at=(current page.center)] {
+            \includegraphics<1>[width=0.6\columnwidth]{diagrams/caso-8.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}[fragile]{Caso 9: singleclient server (falta como cerrarlo)}{}
+\begin{lstlisting}[style=normalnonumbers]
+void main() {
+  while (...) {
+    peer = aceptador_sk.accept();
+
+    // se habla con un cliente
+    while (...) {
+      // peer.send() / peer.recv()
+    }
+
+    peer.shutdown(); peer.close()
+  }
+}
+\end{lstlisting}
+\begin{itemize}
+    \item Que operaciones son \textbf{bloqueantes}?
+    \item Mientras el thread est\'a bloqueado, como har\'ias para \textbf{desbloquearlo y cerrar} el servidor?
+\end{itemize}
+\end{frame}
+\note[itemize] {
+\item Un singleclient server atiende y conversa de a un cliente a la vez. Suelen usarse para implementar servicios simples en embebidos.
+\item Como operaciones bloqueantes tiene el \lstinline[style=normal]!accept!, \lstinline[style=normal]!send! y \lstinline[style=normal]!recv!
+\item Como se har\'ia para cerrar este servidor? T\'ipicamente se le envia una se\~nal (\lstinline[style=normal]!sigint! o Ctrl-C). El servidor debe programar un signal handler para atrapar la se\~nal y cerrar ordenamdamente, de otro modo un Ctrl-C termina en un crash.
+\item Pero hay otra soluci\'on: como el thread estara \textbf{bloqueado} en \lstinline[style=normal]!accept!, \lstinline[style=normal]!send! o \lstinline[style=normal]!recv!, \textbf{otro thread} debe esperar la condici\'on de cierre.
+}
+
+\begin{frame}[fragile]{Caso 10: singleclient server}{}
+    \begin{columns}[T]
+      \begin{column}{.50\linewidth}
+\begin{lstlisting}[style=normalnonumbers]
+void main() {
+  Socket sk; // socket aceptador
+  acep_th = Aceptador(sk);
+  acep_th.start()
+
+  while (std::cin.getc() != 'q') {
+  }
+
+  sk.shutdown() ; sk.close()
+  acep_th.join()
+}
+\end{lstlisting}
+      \end{column}
+      \begin{column}{.50\linewidth}
+\begin{lstlisting}[style=normalnonumbers]
+struct Aceptador:public Thread{
+ Socket& sk;
+
+ void run() {
+  while (/*sk not closed*/) {
+    peer = sk.accept();
+
+    // se habla con un cliente
+    while (...) {
+      // peer.send() / peer.recv()
+    }
+
+    peer.shutdown(); peer.close()
+  }
+}
+\end{lstlisting}
+      \end{column}
+      \end{columns}
+\end{frame}
+\note[itemize] {
+\item El thread \lstinline[style=normal]!Aceptador! es quien acepta y habla con los clientes de a uno a la vez.
+\item El thread principal es quien lanza a el \lstinline[style=normal]!Aceptador! \textbf{pasandole una referencia} del socket. Podr\'ias hacerlo al rev\'es: el \lstinline[style=normal]!Aceptador! tiene un socket y el main le pide una referencia, como prefieras.
+\item El main luego espera por la \textbf{condici\'on de cierre}. En este caso, recibir el caracter \lstinline[style=normal]!'q'! de la entrada estandar.
+\item El \lstinline[style=normal]!Aceptador! estara eventualmente bloqueado en \lstinline[style=normal]!sk.accept()!. Para desbloquearlo \textbf{el main le cierra el socket del aceptador}.
+\item El socket aceptador esta \textbf{compartido} por el main y el thread \lstinline[style=normal]!Aceptador!, hay RC? No: el OS garantiza que un socket puede ser cerrado por un thread mientras es usado por otro.
+\item Que sucede si \lstinline[style=normal]!Aceptador! esta bloqueado en \lstinline[style=normal]!send! o \lstinline[style=normal]!recv! mientras habla con un cliente? Necesitamos separar el \lstinline[style=normal]!sk.accept()! del \lstinline[style=normal]!send! y \lstinline[style=normal]!recv!.
+}
+
+\begin{frame}[fragile]{Caso 11: multiclient server (con leaks)}{}
+    \begin{columns}[T]
+      \begin{column}{.50\linewidth}
+\begin{lstlisting}[style=normalnonumbers]
+void main() {
+  Socket sk; // socket aceptador
+  acep_th = Aceptador(sk);
+  acep_th.start();
+
+  while (std::cin.getc() != 'q') {
+  }
+
+  sk.shutdown() ; sk.close()
+  acep_th.join()
+}
+
+struct Client:public Thread{
+ Socket sk
+
+ void run() {
+    // sk.send() / sk.recv()
+ }
+}
+\end{lstlisting}
+      \end{column}
+      \begin{column}{.50\linewidth}
+\begin{lstlisting}[style=normalnonumbers]
+struct Aceptador:public Thread{
+ Socket& sk;
+ std::list<Client*> clients;
+
+ void run() {
+  while (/*sk not closed*/) {
+    peer = sk.accept();
+
+    th = new Client(
+                std::move(peer)
+             )
+    th->start()
+
+    clients.push_back(th);
+  }
+}
+\end{lstlisting}
+      \end{column}
+      \end{columns}
+\end{frame}
+\note[itemize] {
+\item El \lstinline[style=normal]!Aceptador! acepta pero no habla con los clientes. La \textbf{comunicaci\'on} queda a cargo de \lstinline[style=normal]!Client!.
+\item Como es \lstinline[style=normal]!Aceptador! quien obtiene el socket \lstinline[style=normal]!peer!, debe \textbf{pasarle el ownership} a \lstinline[style=normal]!Client!.
+\item Si el servidor se comunica de forma \textbf{sincr\'onica} con el cliente, \textbf{un solo thread} \lstinline[style=normal]!Client! te servira. Es el mismo caso del \lstinline[style=normal]!Fetcher! del caso 4. Por ejemplo un servidor web simple que recibe 1 request, lo procesa y envia 1 respuesta, siempre de a 1 a la vez.
+\item Si el servidor se comunica de forma \textbf{asincr\'onica} (recibe y envia mensajes independientemente), \textbf{necesitaras 2 threads} \lstinline[style=normal]!ClientSender! y \lstinline[style=normal]!ClientReceiver!, los mismos \textbf{2 threads de comunicaci\'on} del caso 5. Por ejemplo un servidor web recibe requests y los despacha mientras que en paralelo envia al cliente las respuestas. Un proxy web es un ejemplo.
+\item El \lstinline[style=normal]!Aceptador! mantiene una \textbf{lista de clientes}. Ves el leak?
+\item El leak m\'as obvio es que al finalizar no se hacen los \lstinline[style=normal]!delete! ni \lstinline[style=normal]!join!
+\item El leak m\'as sutil es que durante la vida del servidor \textbf{muchos clientes iran finalizando antes de que el servidor cierre}: hay que \textbf{recolectarlos} durante.
+}
+
+\begin{frame}{}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[at=(current page.center)] {
+            \includegraphics<1>[width=0.8\columnwidth]{diagrams/caso-11.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}[fragile]{Reaper (Thread Aceptador)}{}
+    \begin{columns}[T]
+      \begin{column}{.53\linewidth}
+\begin{lstlisting}[style=normalnonumbers]
+void Aceptador::reap_dead() {
+  clients.remove_if([](Client* c){
+     if (c->is_dead()) {
+         c->join();
+         delete c;
+         return true;
+     }
+     return false;
+  });
+}
+void Aceptador::kill_all() {
+  for (auto& c : clients) {
+     c->kill();
+     c->join();
+     delete c;
+  }
+  clients.clear();
+}
+\end{lstlisting}
+      \end{column}
+      \begin{column}{.47\linewidth}
+\begin{lstlisting}[style=normalnonumbers]
+struct Aceptador:public Thread{
+ Socket& sk;
+ std::list<Client*> clients;
+
+ void run() {
+  while (/*sk not closed*/) {
+    peer = sk.accept();
+
+    th = new Client(
+                std::move(peer)
+             )
+    th->start()
+
+    reap_dead();
+    clients.push_back(th);
+  }
+  kill_all();
+}
+\end{lstlisting}
+      \end{column}
+      \end{columns}
+\end{frame}
+\note[itemize] {
+\item Luego de aceptar a un cliente, \lstinline[style=normal]!Aceptador! recorre los clientes en busqueda de clientes muertos (threads que ya terminaron), los joinea y libera sus recursos sacandolos de la lista (ver \lstinline[style=normal]!std::remove_if!). Esto es un \lstinline[style=normal]!reap! o "garbage collection".
+\item Una variante ser\'ia q \lstinline[style=normal]!Aceptador! tenga una \lstinline[style=normal]!deads! queue y que cada thread cliente se registre en ella (\lstinline[style=normal]!push!). Luego \lstinline[style=normal]!reap_dead! hace \lstinline[style=normal]!pop! y los libera. Es m\'as eficiente pero cuidado que tambi\'en hay que sacarlos de la lista \lstinline[style=normal]!clients! y ya no es tan eficiente.
+\item Cuando el servidor y el \lstinline[style=normal]!Aceptador! finalizan, este mata o frena todos los clientes aun vivos en \lstinline[style=normal]!kill_all!.
+\item Por que "matarlos"? En principio un cliente puede hablar con el servidor \textbf{indefinidamente}: es necesario que se entere que el servidor se esta cerrando.
+\item \textbf{Ojo!}. Algunas implementaciones de bajo nivel de \lstinline[style=normal]!pthread! (POSIX threads) permiten matar a un thread. \textbf{No hacerlo}. Esos kills de bajo nivel te destruyen el thread sin que liberen los recursos.
+\item Hay que \textbf{implementar uno mismo el kill para no tener leaks ni corrupciones}.
+}
+
+\begin{frame}[fragile]{is\_dead y kill (Thread Client)}{}
+    \begin{columns}[T]
+      \begin{column}{.45\linewidth}
+\begin{lstlisting}[style=normalnonumbers]
+bool Client::is_dead() {
+  return not is_alive;
+}
+
+// violento pero garantizado
+void Client::kill() {
+   keep_talking = false;
+   sk.shutdown();
+   sk.close();
+}
+
+// polite pero no garantizado
+void Client::kill() {
+   keep_talking = false;
+}
+\end{lstlisting}
+      \end{column}
+      \begin{column}{.55\linewidth}
+\begin{lstlisting}[style=normalnonumbers]
+struct Client:public Thread{
+ Socket sk; // peer skt
+
+ std::atomic<bool> keep_talking;
+ std::atomic<bool> is_alive;
+
+ void run() {
+  is_alive = keep_talking = true;
+  while (keep_talking) {
+      // sk.send() / sk.recv()
+  }
+
+  is_alive = false;
+}
+\end{lstlisting}
+      \end{column}
+      \end{columns}
+\end{frame}
+\note[itemize] {
+\item Frenar un thread correctamente \textbf{depende de la aplicaci\'on en cuesti\'on}, no hay una soluci\'on general.
+\item Para el caso de un thread de comunicaci\'on que esta hablando con un cliente hay que \textbf{marcar que no debe hablar m\'as} (\lstinline[style=normal]!keep_talking=false!). \lstinline[style=normal]!Client! detectar\'a la condici\'on y podr\'a finalizar la comunicaci\'on incluso podr\'a enviarle un \textbf{mensaje de despedida/cierre} al cliente. Esta t\'ecnica es "polite pero sin garantias".
+\item "sin garantias"? El thread puede \textbf{bloquearse} en un \lstinline[style=normal]!send! o \lstinline[style=normal]!recv!. Para asegurase el fin del thread, hay que \textbf{forzar el cierre de su socket} lo que destraba el bloqueo. La contra es que la comunicaci\'on se corta abruptamente, es "violento pero con garantias".
+\item Y si el thread esta bloqueado en otra operaci\'on? Como en un \lstinline[style=normal]!queue.pop()! o \lstinline[style=normal]!file.read()!? \textbf{No hay una soluci\'on gen\'erica}. Tendras que dise\~nar e implementar un \lstinline[style=normal]!kill! espec\'ifico.
+\item En cambio \lstinline[style=normal]!is_alive! y \lstinline[style=normal]!is_dead()! es gen\'erico y podr\'ia (deber\'ian) estar en la clase padre \lstinline[style=normal]!Thread!.
+\item \lstinline[style=normal]!is_dead()! y \lstinline[style=normal]!kill()! \textbf{se llaman del thread} \lstinline[style=normal]!Aceptador! y acceden a vars \textbf{compartidas} con el \textbf{thread} \lstinline[style=normal]!Client!. Hay RC? \textbf{No}. El OS garantiza no RC en \lstinline[style=normal]!sk! si se llama a \lstinline[style=normal]!shutdown!/\lstinline[style=normal]!close!; La stdlib garantiza \textbf{modificaciones at\'omicas} sobre \lstinline[style=normal]!is_alive! y \lstinline[style=normal]!keep_talking! por ser \lstinline[style=normal]!atomic<bool>! (no RC tampoco)
+}
+
+
+\begin{frame}{Caso 12: cliente - servidor (async + game loop)}
+    \begin{tikzpicture}[remember picture,overlay]
+        \node[yshift=-0.1cm,at=(current page.center)] {
+            \includegraphics<1>[width=\columnwidth]{diagrams/caso-12-client-server-game.pdf}
+        };
+    \end{tikzpicture}
+\end{frame}
+
+\begin{frame}[fragile]{Resumen - 1, 2 o N Threads?}
+   \begin{itemize}
+       \item<1-> Detectar que se \textbf{bloquea} y preguntarse si se puede hacer algo en el \textbf{mientras tanto}.
+       \begin{itemize}
+           \item<2-> Verificar que realmente haya ganancia (puede que el cuello de botella este en otro lado)
+           \item<2-> Si hay ganancia usar threads para ganar concurrencia y/o operaciones non-blocking para no bloquearse.
+           \item<2-> Y nunca abusar de lanzar threads por que si (caso 3)
+       \end{itemize}
+   \item<3-> Cada situaci\'on es \textbf{distinta}.
+       \begin{itemize}
+           \item<4-> Hay escenarios puramente sincr\'onicos (caso 1) y otros puramente asincr\'onicos (caso 5); hay veces q no hay una soluci\'on sino m\'ultiples con sus pros y contras (casos 4 y 5)
+           \item<4-> No es trivial (ver deadlock del caso 5)
+       \end{itemize}
+   \item<5-> \textbf{Pools} y \textbf{threads de comunicaci\'on} son 2 dise\~nos \textbf{pero hay m\'as} tanto en dise\~no de 1 aplicaci\'on multithread o de una aplicaci\'on distribuida (multihost). Incluso hay dise\~nos sin threads, \textbf{orientados a eventos}.
+   \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Resumen - Compartir o no compartir?}
+   \begin{itemize}
+      \item<1-> Reconocer que objetos son compartidos por los threads
+       \begin{itemize}
+           \item<2-> Preferir no compartir y en cambio pasarlos entre los threads via blocking queues (caso 5)
+           \item<2-> Sino, preguntarse, hay race condition? Justificar siempre con documentacion que lo respalde
+           \item<2-> Ante una posible RC, usar monitores y locks.
+       \end{itemize}
+   \item<3-> Recordar que para un mismo socket:
+       \begin{itemize}
+            \item<3-> Hacer \lstinline[style=normal]!send! en un thread y \lstinline[style=normal]!recv! en otro esta OK.
+            \item<3-> Hacer \lstinline[style=normal]!shutdown!/\lstinline[style=normal]!close! en un thread y \lstinline[style=normal]!send!/\lstinline[style=normal]!recv!/\lstinline[style=normal]!accept! en otro esta OK.
+            \item<3-> Cualquier otra cosa y tendras una RC.
+       \end{itemize}
+   \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]{Resumen - Cliente - Servidor}
+   \begin{itemize}
+      \item<1-> El aceptador debe
+       \begin{itemize}
+           \item<1-> Aceptar nuevos clientes.
+           \item<1-> Recolectar clientes finalizados (reap)
+           \item<1-> Al finalizar, forzar el cierre de los clientes (kill)
+       \end{itemize}
+      \item<2-> Se puede tener 1 o 2 threads de comunicaci\'on por cliente.
+      \item<3-> Aunque en implementaciones m\'as eficientes, se usa un pool de workers y un dispatcher por eventos (se trabaja con sockets no bloqueantes).
+   \end{itemize}
+\end{frame}
+
+\end{document}
+
+
+
+
+~#
 \section{Servidores multi-cliente (draft)}
 \subsection{}
 \begin{frame}[fragile,label=M1]{Simple: servidor para un solo cliente a la vez}{}
@@ -94,11 +790,13 @@
 \node [coord, below=3em of sktclose] (c3)  {};
 
 
+~% if interactive is off %~
 \draw [->, norm, arrowvisible on={<1,2>}] (sktaccept) -- (peerreadwrite);
 \draw [->, norm, arrowvisible on={<1,2>}] (peerreadwrite) -- (peershutclose);
 
 \draw [->, ret, arrowvisible on={<1,2>}] (peershutclose.west) to[out=180,in=180] (sktaccept.west);
 \draw [->, ret, arrowvisible on={<1,3>}] (sktaccept.east) to[out=0,in=0] (sktclose);
+~% endif %~
 
 \draw [snakearrow] (c0) -- (sktaccept);
 \draw [snakearrow, arrowvisible on={<1,3>}] (sktclose) -- (c3);
@@ -178,6 +876,7 @@
 \node [coord, below=3em of sktclose] (belowsktclose)  {};
 \node [coord, below=3em of peerreadwrite] (belowpeerreadwrite)  {};
 
+~% if interactive is off %~
 \draw [->, norm,arrowvisible on={<1,2,3>}] (sktaccept) -- (reap);
 \draw [->, norm,arrowvisible on={<1,4>}] (stopreap) -- (sktclose);
 
@@ -191,6 +890,7 @@
 
 \draw [->,threadarrow,arrowvisible on={<1,3>}] (belowpeerreadwrite.south) -- (reap.east);
 \draw [->,threadarrow,arrowvisible on={<1,4>}] (belowpeerreadwrite.south) -- (stopreap.east);
+~% endif %~
 
 \draw [snakearrow] (abovesktaccept) -- (sktaccept);
 \draw [snakearrow,arrowvisible on={<1,2>}] (abovepeerreadwrite) -- (peerreadwrite);
@@ -210,12 +910,12 @@
          \begin{lstlisting}[style=normal]
 class ThClient:public Thread {
    std::atomic<bool> keep_talking;
-   std::atomic<bool> is_running;
+   std::atomic<bool> is_alive;
    Socket peer;
 
    public:
    ThClient():keep_talking(true),
-              is_running(true) {}
+              is_alive(true) {}
 
    virtual void run() {
       while (keep_talking) {
@@ -225,7 +925,7 @@ class ThClient:public Thread {
          peer.recv(...);
          ...
       }
-      is_running = false;
+      is_alive = false;
    }
 };
          \end{lstlisting}
@@ -333,22 +1033,30 @@ void ThClient::stop() {
 \node [coord, below=4em of stopreap] (belowstopreap)  {};
 \node [coord, below=3em of peerreadwrite] (belowpeerreadwrite)  {};
 
+~% if interactive is off %~
 \draw [->, norm,arrowvisible on={<1,3>}] (leerstdin) -- (sktclose);
 \draw [->, norm,arrowvisible on={<1,4>}] (sktclose) -- (thjoin);
+~% endif %~
 \draw [->, norm,arrowvisible on={<1,2>}] (sktaccept) -- (reap);
 
+~% if interactive is off %~
 \draw [->, ret,arrowvisible on={<1,2>}] (leerstdin.west) to[out=160,in=115,distance=2.3em] (leerstdin.north);
+~% endif %~
 \draw [->, ret,arrowvisible on={<1,2>}] (reap.west) to[out=115,in=155,distance=6em] (sktaccept.north);
 \draw [->, ret,arrowvisible on={<1,2,3>}] (peerreadwrite.west) to[out=160,in=115,distance=2.3em] (peerreadwrite.north);
 
 \draw [->, ret,arrowvisible on={<1,3>}] (sktaccept.east) to[out=280,in=5,distance=8em] (stopreap.north);
 
+~% if interactive is off %~
 \draw [->,threadarrow,arrowvisible on={<1,2>}] (mainfork.east) -- (abovesktaccept.south);
+~% endif %~
 \draw [->,threadarrow,arrowvisible on={<1,2>}] (sktaccept.east) -- (abovepeerreadwrite.south);
 
 \draw [->,threadarrow,arrowvisible on={<1,2>}] (belowpeerreadwrite.south) -- (reap.east);
 \draw [->,threadarrow,arrowvisible on={<1,3,4>}] (belowpeerreadwrite.south) -- (stopreap.east);
+~% if interactive is off %~
 \draw [->,threadarrow,arrowvisible on={<1,4>}] (belowstopreap.south) -- (thjoin.east);
+~% endif %~
 
 \draw [snakearrow] (abovemainfork) -- (mainfork);
 \draw [snakearrow] (mainfork) -- (leerstdin);
@@ -422,6 +1130,9 @@ void ThClient::stop() {
 \item Pero hacer un \lstinline[style=normal]!send! (o un \lstinline[style=normal]!recv!) sobre un mismo socket desde m\'ultiples hilos trae problemas de concurrencia!
 }
 
-\end{document}
+~% if interactive is on %~
+\begin{frame}[fragile]{Proxies}{}
+\end{frame}
+~% endif %~
 
-
+#~
