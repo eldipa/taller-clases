@@ -1,0 +1,475 @@
+<!doctype html>
+<html> 
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<title>Caso real: *minimum value product* que crashea</title>
+		<link rel="stylesheet" href="dist/reset.css">
+		<link rel="stylesheet" href="dist/reveal.css">
+<link rel="stylesheet" href="dist/theme/serif.css" id="theme">
+		<!-- Theme used for syntax highlighted code -->
+<link rel="stylesheet" href="plugin/highlight/zenburn.min.css" id="highlight-theme"></head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+<section data-markdown  data-separator-notes="^Speaker-Notes:"><textarea data-template>
+[comment]: # (Example and doc: https://gitlab.com/da_doomer/markdown-slides/-/blob/master/example/presentation.md?plain=1)
+
+### Caso real: *minimum value product* que crashea
+
+![01-motivacion-crash-mvp](sockets-motivation-distribution-redundancy--frames/01-motivacion-crash-mvp.png)
+
+Speaker-Notes:
+- Situación: el fin de semana estuviste codeando un MVP para
+presentarlo a un inversor el martes. El software tiene una interfaz (UI)
+simple que permite escribir queries y ver los resultados.
+Las queries las resuelve y ejecuta una libreria (Geo).
+- La librería tiene 2 métodos:
+  - open: abre la base de dato, es una operación lenta q lleva 10 minutos.
+  - query: que ejecuta la query, es una operación rápida q lleva 100 millisegundos.
+- El problema? El MVP funciona pero el lunes te das cuenta que de vez en
+cuando crashea. Tras una rápida inspección sabes que el issue está en la
+lib. Qué haces?
+  - Debugguear la lib? No tenes el tiempo, mañana es la reunión con el inversor.
+  - Cambiar de lib? Hiciste una búsqueda rápida y no hay otra lib q
+pueda abrir la base de datos.
+  - Valgrind? Por supuesto, tal vez es un fix rápido. Lamentablemente
+ves con valgrind que los crashes son en lugares y momentos random.
+No parece haber una única causa.
+  - Pedirle al inversor mas tiempo? Jajajja.
+
+</textarea></section>
+<section data-markdown  data-transition="slide-in fade-out" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+
+### Hack? → Process Isolation + Sockets
+
+![02-process-isolation-via-socket](sockets-motivation-distribution-redundancy--frames/02-process-isolation-via-socket.png)
+
+Speaker-Notes:
+- El hack es separar la UI de la lib en 2 procesos, así, si el proceso
+de la lib crashea no se lleva puesto al de la UI. Esto es
+*process-isolation*.
+- Como comunicamos dos procesos? En una misma máquina hay múltiples
+formas pero la más común (y que funciona entre máquinas distintas)
+es con *sockets*.
+- Veremos que son los sockets pero el TL;DR son una forma de enviar
+y recibir datos. En nuestro MVP lo usamos para enviar las queries
+y sus resultados.
+
+</textarea></section>
+<section data-markdown  data-transition="fade-in fade-out" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+
+### Timeouts & cold starts
+
+![03-timeout](sockets-motivation-distribution-redundancy--frames/03-timeout.png)
+
+Speaker-Notes:
+- Ahora que tenemos los procesos separados tenemos un problema: la UI no
+crashea pero tampoco se puede dar cuenta que la lib sí crasheó.
+- Con sockets la UI puede darse cuenta que la conexion con la lib se
+cayo pero eso es solo al momento de intentar hacer una query y,
+posiblemente, luego de un *timeout*.
+- En resumen, la UI no crashea pero habrá alguna query que se quedará
+colgada.
+
+</textarea></section>
+<section data-markdown  data-transition="fade-in fade-out" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+
+### Timeouts & cold starts
+
+![04-cold-start](sockets-motivation-distribution-redundancy--frames/04-cold-start.png)
+
+Speaker-Notes:
+- Cuando la lib crashea la UI debe levantar un nuevo proceso para seguir
+operando.
+- Lamentablemente la lib Geo tarda 10 minutos en abrir la base de datos
+asi que desde la perspectiva del usuario, habrán queries que tardan 10
+minutos. Una pésima experiencia.
+- Esto se llama *cold-start* y es algo bastante común. Pensá que un
+proceso puede estar corriendo durante días o meses y en cambio se
+cierra y levanta ocacionalmente. Es lógico optimizar el run-time y
+no el start-time, incluso, hacer muchas más tareas en el start-time
+en pos de hacer el run-time más rápido aun.
+
+</textarea></section>
+<section data-markdown  data-transition="fade-in fade-out" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+
+### Como reducir el cold start? → Redundancy
+
+![05-redundancy](sockets-motivation-distribution-redundancy--frames/05-redundancy.png)
+
+Speaker-Notes:
+- Solucion al cold-start? Tenemos levantadas varios procesos con la lib
+con la base de datos ya abierta y si se cae uno podemos rápidamente
+switchear al otro.
+- Esto es tener *redundancia* y es una práctica común no solo en
+software.
+- La redundancia tiene un costo: hay más memoria en uso para los múltiples
+procesos extra.
+
+</textarea></section>
+<section data-markdown  data-transition="fade-in fade-out" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+
+### Paralelismo y balanceo
+
+![06-paralelismo](sockets-motivation-distribution-redundancy--frames/06-paralelismo.png)
+
+Speaker-Notes:
+- Podemos aprovechar que las queries son read-only y que tenemos
+múltiples procesos levantados para correr queries en *paralelo*.
+- Incluso si una query es lenta, podemos no pasarle más queries
+a ese proceso y pasarselas a los otros, haciendo un *balanceo de carga*.
+
+</textarea></section>
+<section data-markdown  data-transition="slide" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+
+### Sistema Distribuido
+
+![07-distribuido](sockets-motivation-distribution-redundancy--frames/07-distribuido.png)
+
+Speaker-Notes:
+- Y ya que estamos, podríamos tener la lib corriendo en múltiples
+lugares en servidores remotos que tengan más recursos para ejecutar
+las queries mientras que la UI puede correr un un dispositivo más
+humilde como un celular.
+- *Distribuir* un sistema te da redundancia y te permite centralizar
+los recursos en pocos servidores mientras le da el servicio
+a múltiples clientes (de igual forma que hay millones de celulares
+que acceden a `google.com`).
+
+</textarea></section>
+<section data-markdown  data-transition="slide" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+
+### The Dark Side: Latencia
+
+![08-dark-side-latencia](sockets-motivation-distribution-redundancy--frames/08-dark-side-latencia.png)
+
+Speaker-Notes:
+- Pero el uso de sockets y de distribuir un sistema no es gratis. Hay un
+costo no trivial que impacta en la *latencia* (tus queries tardan más en
+responder)
+- Fijate en el cambio de orden de cuanta latencia agrega cada tipo
+de llamada, sea local (function call), sockets en una misma máquina
+o sockets en máquinas distribuidas.
+- Los sistemas distribuidos tienen más problemas pero la latencia
+es la única de la que no te podes escapar.
+
+</textarea></section>
+<section data-markdown  data-transition="slide" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+### Analogía de TCP/IP
+</textarea></section>
+<section data-markdown  data-transition="slide-in fade-out" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+
+### Analogía de TCP/IP: Alice llama a Bob
+![01-phone-wish.png](sockets-telephone-analogy-tcp-ip-network--frames/01-phone-wish.png)
+
+Speaker-Notes:
+- Supone que Alice quiere llamar a Bob, que haria?
+
+</textarea></section>
+<section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+### Resolución de nombres
+![02-phone-number-lookup.png](sockets-telephone-analogy-tcp-ip-network--frames/02-phone-number-lookup.png)
+
+Speaker-Notes:
+- Ya pocos se acuerdan de los números de teléfonos de sus amigos y
+familiares, menos aun de los números de personas más ajenas
+- Hoy delegamos a la lista de contactos el mapeo de un nombre conocido
+a su numero de teléfono.
+
+</textarea></section>
+<section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+### La red
+![03-network.png](sockets-telephone-analogy-tcp-ip-network--frames/03-network.png)
+
+Speaker-Notes:
+- La red de telefonía es una serie redundante de antenas y repetidoras
+que sabe localizar dispositivos telefónicos por su numero.
+- Notar que la red no esta exenta de problemas y varios de sus links
+pueden estar degradados o no habilitados. Aun así, por tener
+redundancia, la red puede mantener a todos los participantes
+conectados.
+</textarea></section>
+<section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+### Conexión, ruteo y aceptación
+![04-network-connection.png](sockets-telephone-analogy-tcp-ip-network--frames/04-network-connection.png)
+
+Speaker-Notes:
+- Cuando Alice llama a Bob le pasa el número de teléfono a la red.
+- De alguna manera la red sabe como llegar a Bob (*ruteo*) y si la
+llamada es aceptada por Bob, la red se encarga de transmitir los
+datos de Alice a Bob y viceversa.
+- No importa si la red sufre de daños, links rotos o congestiones,
+la red sabrá como encontrar caminos alternos entre Alice y Bob
+para mantener la comunicación sin que ellos deban hacer algo.
+- Decimos que Alice tiene un rol *activo* por *iniciar la llamada*
+(o iniciar la conexión); Bob tiene un rol *pasivo* por estar
+*esperando llamadas/conexiones entrantes* para su eventual *aceptación*.
+
+</textarea></section>
+<section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+### Conexión establecida → canal de comunicación
+![05-connection-stablished.png](sockets-telephone-analogy-tcp-ip-network--frames/05-connection-stablished.png)
+
+Speaker-Notes:
+- Una vez establecida la conexión, tanto Alice como Bob *no tienen ningún rol*
+en particular, ambos pueden tanto hablar como escuchar y la red,
+para ellos, es un detalle anecdótico.
+
+</textarea></section>
+<section data-markdown  data-transition="fade-in slide-out" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+### Cierre de la conexión
+![06-connection-shutdown.png](sockets-telephone-analogy-tcp-ip-network--frames/06-connection-shutdown.png)
+
+Speaker-Notes:
+- Ambas partes pueden en cualquier momento finalizar la llamada y cerrar la conexión
+unilateralmente.
+
+</textarea></section>
+<section data-markdown  data-transition="slide" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+### Sockets TCP/IP
+
+</textarea></section>
+<section data-markdown  data-transition="slide-in fade-out" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+
+### Dirección IP y puerto TCP
+![img](sockets-tcp-ip-api--frames/00-tcp-ip-api-ip-port.png)
+
+Speaker-Notes:
+- Así como la red de telefonía usa números de teléfonos la red de
+internet usa direcciones IP.
+- Actualmente hay 2 tipos de direcciones: IPv4 (4 bytes) e IPv6 (8 bytes)
+y una computadora puede tener ambas (o incluso más de una dirección por
+maquina)
+- A diferencia de los teléfonos, no nos interesa comunicarnos con
+una computadora sino con un programa corriendo en ella.
+Entonces cada programa que lo desee debe pedirle al OS un puerto, un
+número único que junto con la dirección IP de la maquina le permitirá
+a otros conectarse a dicho programa.
+- Una analogía seria ir a visitar a un amigo a su departamento:
+necesitas la dirección del edificio pero también el piso y número
+del departamento.
+- Ahora, nadie se acuerda de direcciones IP o puertos (y hardcodearlos
+en el código es mala idea). Así que el OS nos dará una forma de mapear
+nombres humanamente entendibles y recordables *host-names* y *service-names*
+a direcciones IP y puertos respectivamente.
+
+
+</textarea></section>
+<section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+![img](sockets-tcp-ip-api--frames/01-tcp-ip-api-getaddr-server.png)
+
+Speaker-Notes:
+
+- El servidor debe indicarle al OS en que interfaz de red (con IP) y en
+que puerto TCP quiere escuchar conexiones entrantes.
+- Hardcodear IP y puertos es mala práctica asi que se usa `getaddrinfo`
+para que sea el OS quien mapee el hostname y servicename a la IP y
+puerto correspondiente.
+- Para un servidor HTTP, en convencion usar el puerto 80.
+- En general un servidor no le interesa (o no sabe) su propio hostname y
+no lo necesita: a `getaddrinfo` le podes pasar `ANY` y el OS elegira una
+interfaz de red (e IP) adecuada.
+
+</textarea></section>
+<section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+![img](sockets-tcp-ip-api--frames/02-tcp-ip-api-socket-server.png)
+
+Speaker-Notes:
+
+- Crear un socket no es nada más que crear un file descriptor al igual que cuando abrimos un archivo.
+- Sera del lado del OS donde se allocaran las estructuras y buffers
+necesarios; del lado del programa habra solo que guardarse un `int`.
+- Al OS le tenemos que decir que tipo de socket queremos. En nuestro
+caso, TCP/IP. Hay muchos más (más adelante veremos UDP/IP).
+</textarea></section>
+<section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+![img](sockets-tcp-ip-api--frames/03-tcp-ip-api-bind-server.png)
+
+Speaker-Notes:
+- Un socket TCP/IP por si solo no sabe de que interfaz de red (IP) o
+puerto le fue asignado.
+- Con `bind` enlazamos o atamos al socket a una dirección IP y puerto local
+(obtenidos con `getaddrinfo`)
+
+</textarea></section>
+<section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+![img](sockets-tcp-ip-api--frames/04-tcp-ip-api-listen-server.png)
+
+Speaker-Notes:
+- Es con la funcion `listen` que le indicamos al OS que queremos
+escuchar conexiones (jugar el rol pasivo o "esperar llamadas").
+- Las conexiones entrantes quedaran a la espera de ser aceptadas: con
+`listen` le decimos al OS hasta cuantas pueden esperar. Detras de escena
+se crea una queue de espera.
+- Cuando la queue se llena, nuevas conexiones son rechazadas
+automáticamente.
+
+</textarea></section>
+<section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+![img](sockets-tcp-ip-api--frames/05-tcp-ip-api-accept-blocked.png)
+
+Speaker-Notes:
+- Con `accept` decimos que aceptamos la siguiente conexión. Como en este
+caso aun no hay nadie conectandose, `accept` se bloquea.
+
+</textarea></section>
+<section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+![img](sockets-tcp-ip-api--frames/06-tcp-ip-api-getaddr-client.png)
+
+Speaker-Notes:
+- Ahora jugamos del lado del cliente. Usamos `getaddrinfo` para resolver
+el hostname y servicename **destino**, *"a quien nos queremos
+conectar"*.
+
+</textarea></section>
+<section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+![img](sockets-tcp-ip-api--frames/07-tcp-ip-api-connect-client.png)
+
+Speaker-Notes:
+- Al igual que en el servidor creamos un socket.
+- Es con `connect` donde le decimos al OS que queremos jugar el rol
+activo o "el quien inicia una llamada".
+- `connect` implicitamente hace un `bind`: el OS elige una interfaz de
+red (IP) que tenga salida a la internet y un puerto TCP libre.
+- Si por algun exótica razón necesitas usar una IP o puerto en
+específico, podes llamar a `bind` antes de hacer el `connect`.
+
+</textarea></section>
+<section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+![img](sockets-tcp-ip-api--frames/08-tcp-ip-api-connect-wait-client.png)
+
+Speaker-Notes:
+- Del lado del servidor, el OS pone en la queue la conexión entrante
+y espera a que el programa haga el `accept`.
+- Del lado del cliente, el `connect` se bloquea hasta que la conexión
+sea aceptada.
+
+</textarea></section>
+<section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+![img](sockets-tcp-ip-api--frames/09-tcp-ip-api-connect-accept.png)
+
+Speaker-Notes:
+- La llamada a `accept` toma la siguiente conexión pendiente y la
+acepta, desbloqueandose y retornando un nuevo socket.
+- El servidor usara el nuevo socket (`skt`) para comunicarse con el
+cliente; el socket aceptador (`acep`) puede seguir siendo usado para
+escuchar y aceptar nuevas conexiones.
+- En general, un servidor tendra N+1 sockets: 1 para escuchar y aceptar
+y N para hablar con sus N clientes.
+
+</textarea></section>
+<section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+![img](sockets-tcp-ip-api--frames/10-tcp-ip-api-send-recv.png)
+
+Speaker-Notes:
+- Los sockets TCP son *full duplex*: se puede tanto enviar como recibir
+datos a la vez.
+- Tanto `send` como `recv` reciben como parametro cuantos bytes
+uno quiere enviar (`send`) o recibir (`recv`).
+- Sin embargo el OS **no** garantiza que va a *realmente*
+enviar o recibir esa cantidad de bytes exacta.
+Llamamos a esto *short writes* (para el `send`) y *short reads*
+(para el `recv`).
+- Lo que si se garantiza es que al menos 1 byte se va a enviar o
+recibir.
+- Si `send` no puede enviar ni 1 byte o `recv` no puede recibir ni 1 byte,
+las funciones se bloquean.
+
+</textarea></section>
+<section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+![img](sockets-tcp-ip-api--frames/A01-tcp-ip-api-short-read.png)
+
+Speaker-Notes:
+- TCP **no** entiende de "mensajes", para su perspectiva todo es una
+**sola** tira/secuencia de bytes. En específico, TCP no tiene *boundaries* y en cambio
+esta orientado al *streaming*.
+- Que significa **no** tiene boundaries? Cuando se hace un `send` de
+`"hola"`, no se esta enviando una palabra, sino bytes.
+Y por ende, el OS (del cliente o del servidor) o la red pueden
+*fragmentar* y enviar unos bytes y luego otros.
+- De ahi que `recv` sufre de *short reads*: aunque inconveniente, sería
+mucho peor que el proceso se quede esperando para recibir "todo" cuando
+podria recibir "parte" y continuar el procesamiento.
+- El *short read* no es un bug, es un feature.
+- Si se quiere recibir "todo" hay que llamar a `recv` múltiples veces
+para ir obteniendo los bytes de a cachos.
+
+</textarea></section>
+<section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+![img](sockets-tcp-ip-api--frames/A02-tcp-ip-api-short-write.png)
+
+Speaker-Notes:
+- `send` sufre de *short writes* pero esto tambien es por performance:
+si la red o el destino estan "lentos", tal vez no se puede enviar
+todos los bytes (`"hola"`) pero si se puede enviar algunos (`"h"`)
+- Con un *short write* te aseguras que estas enviando todo lo que se
+puede (no todo lo que el programador quiere).
+- Si se quiere enviar "todo", hay que llamar a `send` múltiples veces
+enviando en cada paso el cacho restante.
+
+</textarea></section>
+<section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+![img](sockets-tcp-ip-api--frames/11-tcp-ip-api-half-shutdown.png)
+
+Speaker-Notes:
+- Tanto el cliente como el servidor pueden cerrar la conexión con
+`shutdown`.
+- Como TCP es *full duplex* uno puede cerrar el canal en un sentido
+y no en el otro.
+- Cuando un proceso cierra parcial o totalmente un canal, el otro
+proceso se entera por que `send` o `recv` retornan o con 0 bytes
+o con un código de error específico.
+
+</textarea></section>
+<section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+![img](sockets-tcp-ip-api--frames/12-tcp-ip-api-shutdown-close.png)
+
+Speaker-Notes:
+- Para cerrar completamente un canal TCP y liberar recursos, se debe
+hacer un `shutdown` para ambas direcciones (*read and write*) y luego
+un `close` del file descriptor.
+
+
+</textarea></section>
+<section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
+![img](sockets-tcp-ip-api--frames/13-tcp-ip-api-shutdown-close-server.png)
+
+Speaker-Notes:
+- Para cerrar el socket aceptador se debe hacer también un `shutdown` y
+luego un `close`.
+- Del lado del cliente el puerto queda libre para ser usado por otra
+aplicación.
+- Del lado del servidor el puerto queda momentáneamente invalidado
+en el estado `TIME_WAIT`.
+
+</textarea></section>
+<section data-markdown ><textarea data-template>
+
+</textarea></section>
+			</div>
+		</div>
+
+		<script src="dist/reveal.js"></script>
+		<script src="plugin/notes/notes.js"></script>
+		<script src="plugin/markdown/markdown.js"></script>
+		<script src="plugin/highlight/highlight.js"></script>
+		<script src="plugin/math/math.js"></script>
+		<script>
+			// More info about initialization & config:
+			// - https://revealjs.com/initialization/
+			// - https://revealjs.com/config/
+Reveal.initialize({
+controls : false,
+markdown : {smartypants: true},
+width : 960,
+height : 540,
+showNotes : true,
+				hash: true,
+				// Learn about plugins: https://revealjs.com/plugins/
+				plugins: [ RevealMarkdown, RevealHighlight, RevealNotes, RevealMath ]
+			});
+		</script>
+	</body>
+</html>
