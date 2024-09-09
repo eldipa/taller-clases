@@ -1,5 +1,5 @@
 <!doctype html>
-<html> 
+<html>
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -18,7 +18,7 @@
 
 ### Caso real: *minimum value product* que crashea
 
-![01-motivacion-crash-mvp](sockets-motivation-distribution-redundancy--frames/01-motivacion-crash-mvp.png)
+<object data="sockets-motivation-distribution-redundancy--frames/01-motivacion-crash-mvp.svg" />
 
 Speaker-Notes:
 - Situación: el fin de semana estuviste codeando un MVP para
@@ -44,7 +44,7 @@ No parece haber una única causa.
 
 ### Hack? → Process Isolation + Sockets
 
-![02-process-isolation-via-socket](sockets-motivation-distribution-redundancy--frames/02-process-isolation-via-socket.png)
+<object data="sockets-motivation-distribution-redundancy--frames/02-process-isolation-via-socket.svg" />
 
 Speaker-Notes:
 - El hack es separar la UI de la lib en 2 procesos, así, si el proceso
@@ -62,7 +62,7 @@ y sus resultados.
 
 ### Timeouts & cold starts
 
-![03-timeout](sockets-motivation-distribution-redundancy--frames/03-timeout.png)
+<object data="sockets-motivation-distribution-redundancy--frames/03-timeout.svg" />
 
 Speaker-Notes:
 - Ahora que tenemos los procesos separados tenemos un problema: la UI no
@@ -78,7 +78,7 @@ colgada.
 
 ### Timeouts & cold starts
 
-![04-cold-start](sockets-motivation-distribution-redundancy--frames/04-cold-start.png)
+<object data="sockets-motivation-distribution-redundancy--frames/04-cold-start.svg" />
 
 Speaker-Notes:
 - Cuando la lib crashea la UI debe levantar un nuevo proceso para seguir
@@ -97,7 +97,7 @@ en pos de hacer el run-time más rápido aun.
 
 ### Como reducir el cold start? → Redundancy
 
-![05-redundancy](sockets-motivation-distribution-redundancy--frames/05-redundancy.png)
+<object data="sockets-motivation-distribution-redundancy--frames/05-redundancy.svg" />
 
 Speaker-Notes:
 - Solucion al cold-start? Tenemos levantadas varios procesos con la lib
@@ -113,7 +113,7 @@ procesos extra.
 
 ### Paralelismo y balanceo
 
-![06-paralelismo](sockets-motivation-distribution-redundancy--frames/06-paralelismo.png)
+<object data="sockets-motivation-distribution-redundancy--frames/06-paralelismo.svg" />
 
 Speaker-Notes:
 - Podemos aprovechar que las queries son read-only y que tenemos
@@ -126,7 +126,7 @@ a ese proceso y pasarselas a los otros, haciendo un *balanceo de carga*.
 
 ### Sistema Distribuido
 
-![07-distribuido](sockets-motivation-distribution-redundancy--frames/07-distribuido.png)
+<object data="sockets-motivation-distribution-redundancy--frames/07-distribuido.svg" />
 
 Speaker-Notes:
 - Y ya que estamos, podríamos tener la lib corriendo en múltiples
@@ -143,7 +143,7 @@ que acceden a `google.com`).
 
 ### The Dark Side: Latencia
 
-![08-dark-side-latencia](sockets-motivation-distribution-redundancy--frames/08-dark-side-latencia.png)
+<object data="sockets-motivation-distribution-redundancy--frames/08-dark-side-latencia.svg" />
 
 Speaker-Notes:
 - Pero el uso de sockets y de distribuir un sistema no es gratis. Hay un
@@ -162,7 +162,7 @@ es la única de la que no te podes escapar.
 <section data-markdown  data-transition="slide-in fade-out" data-separator-notes="^Speaker-Notes:"><textarea data-template>
 
 ### Analogía de TCP/IP: Alice llama a Bob
-![01-phone-wish.png](sockets-telephone-analogy-tcp-ip-network--frames/01-phone-wish.png)
+<object data="sockets-telephone-analogy-tcp-ip-network--frames/01-phone-wish.svg" />
 
 Speaker-Notes:
 - Supone que Alice quiere llamar a Bob, que haria?
@@ -170,7 +170,7 @@ Speaker-Notes:
 </textarea></section>
 <section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
 ### Resolución de nombres
-![02-phone-number-lookup.png](sockets-telephone-analogy-tcp-ip-network--frames/02-phone-number-lookup.png)
+<object data="sockets-telephone-analogy-tcp-ip-network--frames/02-phone-number-lookup.svg" />
 
 Speaker-Notes:
 - Ya pocos se acuerdan de los números de teléfonos de sus amigos y
@@ -181,7 +181,7 @@ a su numero de teléfono.
 </textarea></section>
 <section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
 ### La red
-![03-network.png](sockets-telephone-analogy-tcp-ip-network--frames/03-network.png)
+<object data="sockets-telephone-analogy-tcp-ip-network--frames/03-network.svg" />
 
 Speaker-Notes:
 - La red de telefonía es una serie redundante de antenas y repetidoras
@@ -193,7 +193,7 @@ conectados.
 </textarea></section>
 <section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
 ### Conexión, ruteo y aceptación
-![04-network-connection.png](sockets-telephone-analogy-tcp-ip-network--frames/04-network-connection.png)
+<object data="sockets-telephone-analogy-tcp-ip-network--frames/04-network-connection.svg" />
 
 Speaker-Notes:
 - Cuando Alice llama a Bob le pasa el número de teléfono a la red.
@@ -210,7 +210,7 @@ para mantener la comunicación sin que ellos deban hacer algo.
 </textarea></section>
 <section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
 ### Conexión establecida → canal de comunicación
-![05-connection-stablished.png](sockets-telephone-analogy-tcp-ip-network--frames/05-connection-stablished.png)
+<object data="sockets-telephone-analogy-tcp-ip-network--frames/05-connection-stablished.svg" />
 
 Speaker-Notes:
 - Una vez establecida la conexión, tanto Alice como Bob *no tienen ningún rol*
@@ -220,7 +220,7 @@ para ellos, es un detalle anecdótico.
 </textarea></section>
 <section data-markdown  data-transition="fade-in slide-out" data-separator-notes="^Speaker-Notes:"><textarea data-template>
 ### Cierre de la conexión
-![06-connection-shutdown.png](sockets-telephone-analogy-tcp-ip-network--frames/06-connection-shutdown.png)
+<object data="sockets-telephone-analogy-tcp-ip-network--frames/06-connection-shutdown.svg" />
 
 Speaker-Notes:
 - Ambas partes pueden en cualquier momento finalizar la llamada y cerrar la conexión
@@ -234,7 +234,7 @@ unilateralmente.
 <section data-markdown  data-transition="slide-in fade-out" data-separator-notes="^Speaker-Notes:"><textarea data-template>
 
 ### Dirección IP y puerto TCP
-![img](sockets-tcp-ip-api--frames/00-tcp-ip-api-ip-port.png)
+<object data="sockets-tcp-ip-api--frames/00-tcp-ip-api-ip-port.svg" />
 
 Speaker-Notes:
 - Así como la red de telefonía usa números de teléfonos la red de
@@ -258,7 +258,7 @@ a direcciones IP y puertos respectivamente.
 
 </textarea></section>
 <section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
-![img](sockets-tcp-ip-api--frames/01-tcp-ip-api-getaddr-server.png)
+<object data="sockets-tcp-ip-api--frames/01-tcp-ip-api-getaddr-server.svg" />
 
 Speaker-Notes:
 
@@ -274,7 +274,7 @@ interfaz de red (e IP) adecuada.
 
 </textarea></section>
 <section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
-![img](sockets-tcp-ip-api--frames/02-tcp-ip-api-socket-server.png)
+<object data="sockets-tcp-ip-api--frames/02-tcp-ip-api-socket-server.svg" />
 
 Speaker-Notes:
 
@@ -285,7 +285,8 @@ necesarios; del lado del programa habra solo que guardarse un `int`.
 caso, TCP/IP. Hay muchos más (más adelante veremos UDP/IP).
 </textarea></section>
 <section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
-![img](sockets-tcp-ip-api--frames/03-tcp-ip-api-bind-server.png)
+<object data="sockets-tcp-ip-api--frames/03-tcp-ip-api-bind-server.svg"
+/>
 
 Speaker-Notes:
 - Un socket TCP/IP por si solo no sabe de que interfaz de red (IP) o
@@ -295,7 +296,7 @@ puerto le fue asignado.
 
 </textarea></section>
 <section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
-![img](sockets-tcp-ip-api--frames/04-tcp-ip-api-listen-server.png)
+<object data="sockets-tcp-ip-api--frames/04-tcp-ip-api-listen-server.svg" />
 
 Speaker-Notes:
 - Es con la funcion `listen` que le indicamos al OS que queremos
@@ -308,7 +309,7 @@ automáticamente.
 
 </textarea></section>
 <section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
-![img](sockets-tcp-ip-api--frames/05-tcp-ip-api-accept-blocked.png)
+<object data="sockets-tcp-ip-api--frames/05-tcp-ip-api-accept-blocked.svg" />
 
 Speaker-Notes:
 - Con `accept` decimos que aceptamos la siguiente conexión. Como en este
@@ -316,7 +317,7 @@ caso aun no hay nadie conectandose, `accept` se bloquea.
 
 </textarea></section>
 <section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
-![img](sockets-tcp-ip-api--frames/06-tcp-ip-api-getaddr-client.png)
+<object data="sockets-tcp-ip-api--frames/06-tcp-ip-api-getaddr-client.svg" />
 
 Speaker-Notes:
 - Ahora jugamos del lado del cliente. Usamos `getaddrinfo` para resolver
@@ -325,7 +326,7 @@ conectar"*.
 
 </textarea></section>
 <section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
-![img](sockets-tcp-ip-api--frames/07-tcp-ip-api-connect-client.png)
+<object data="sockets-tcp-ip-api--frames/07-tcp-ip-api-connect-client.svg" />
 
 Speaker-Notes:
 - Al igual que en el servidor creamos un socket.
@@ -338,7 +339,7 @@ específico, podes llamar a `bind` antes de hacer el `connect`.
 
 </textarea></section>
 <section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
-![img](sockets-tcp-ip-api--frames/08-tcp-ip-api-connect-wait-client.png)
+<object data="sockets-tcp-ip-api--frames/08-tcp-ip-api-connect-wait-client.svg" />
 
 Speaker-Notes:
 - Del lado del servidor, el OS pone en la queue la conexión entrante
@@ -348,7 +349,7 @@ sea aceptada.
 
 </textarea></section>
 <section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
-![img](sockets-tcp-ip-api--frames/09-tcp-ip-api-connect-accept.png)
+<object data="sockets-tcp-ip-api--frames/09-tcp-ip-api-connect-accept.svg" />
 
 Speaker-Notes:
 - La llamada a `accept` toma la siguiente conexión pendiente y la
@@ -361,7 +362,7 @@ y N para hablar con sus N clientes.
 
 </textarea></section>
 <section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
-![img](sockets-tcp-ip-api--frames/10-tcp-ip-api-send-recv.png)
+<object data="sockets-tcp-ip-api--frames/10-tcp-ip-api-send-recv.svg" />
 
 Speaker-Notes:
 - Los sockets TCP son *full duplex*: se puede tanto enviar como recibir
@@ -379,7 +380,8 @@ las funciones se bloquean.
 
 </textarea></section>
 <section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
-![img](sockets-tcp-ip-api--frames/A01-tcp-ip-api-short-read.png)
+<object data="sockets-tcp-ip-api--frames/A01-tcp-ip-api-short-read.svg"
+/>
 
 Speaker-Notes:
 - TCP **no** entiende de "mensajes", para su perspectiva todo es una
@@ -398,7 +400,8 @@ para ir obteniendo los bytes de a cachos.
 
 </textarea></section>
 <section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
-![img](sockets-tcp-ip-api--frames/A02-tcp-ip-api-short-write.png)
+<object data="sockets-tcp-ip-api--frames/A02-tcp-ip-api-short-write.svg"
+/>
 
 Speaker-Notes:
 - `send` sufre de *short writes* pero esto tambien es por performance:
@@ -411,7 +414,7 @@ enviando en cada paso el cacho restante.
 
 </textarea></section>
 <section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
-![img](sockets-tcp-ip-api--frames/11-tcp-ip-api-half-shutdown.png)
+<object data="sockets-tcp-ip-api--frames/11-tcp-ip-api-half-shutdown.svg" />
 
 Speaker-Notes:
 - Tanto el cliente como el servidor pueden cerrar la conexión con
@@ -424,7 +427,7 @@ o con un código de error específico.
 
 </textarea></section>
 <section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
-![img](sockets-tcp-ip-api--frames/12-tcp-ip-api-shutdown-close.png)
+<object data="sockets-tcp-ip-api--frames/12-tcp-ip-api-shutdown-close.svg" />
 
 Speaker-Notes:
 - Para cerrar completamente un canal TCP y liberar recursos, se debe
@@ -434,7 +437,7 @@ un `close` del file descriptor.
 
 </textarea></section>
 <section data-markdown  data-transition="fade" data-separator-notes="^Speaker-Notes:"><textarea data-template>
-![img](sockets-tcp-ip-api--frames/13-tcp-ip-api-shutdown-close-server.png)
+<object data="sockets-tcp-ip-api--frames/13-tcp-ip-api-shutdown-close-server.svg" />
 
 Speaker-Notes:
 - Para cerrar el socket aceptador se debe hacer también un `shutdown` y
